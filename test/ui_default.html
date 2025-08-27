@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Optimized comment display</title>
+  <style>
+    /* 기본 스타일 */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #fff; /* 흰색 배경 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .video-container {
+      width: 800px;
+      margin-top: 20px;
+      position: relative;
+      background-color: #000;
+      overflow: hidden;
+      border-radius: 20px; /* 유튜브 느낌의 둥근 모서리 */
+      transition: all 0.3s ease;
+    }
+
+    video {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: 12px; /* 비디오 둥근 모서리 */
+    }
+
+    /* 기본 비디오 컨트롤 완전히 숨기기 */
+    video::-webkit-media-controls-panel { display: none !important; }
+    video::-webkit-media-controls-play-button { display: none !important; }
+    video::-webkit-media-controls-start-playback-button { display: none !important; }
+    video::-moz-media-controls { display: none !important; }
+    video::--ms-media-controls { display: none !important; }
+
+    /* 커스텀 비디오 컨트롤 */
+    .custom-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.8);
+      padding: 4px 15px 4px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 4;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .video-container:hover .custom-controls { opacity: 1; }
+
+    /* 진행 바 컨테이너 */
+    .progress-container {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      margin-bottom: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    /* 진행 바 */
+    .progress-bar {
+      height: 100%;
+      background: #ff0000;
+      border-radius: 3px;
+      width: 0%;
+      position: relative;
+      transition: width 0.1s ease;
+    }
+
+    /* 진행 바 끝 동그라미 */
+    .progress-handle {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: #ff0000;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .progress-container:hover .progress-handle { opacity: 1; }
+
+    /* 컨트롤 버튼들 */
+    .controls-bottom {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 3px;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-button:hover { background-color: rgba(255,255,255,0.2); }
+
+    .control-button svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    /* 시간 표시 */
+    .time-display {
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* ===================== 댓글 오버레이 (A 스타일) ===================== */
+    .comments-overlay {
+      --overlay-h: 220px;             /* JS에서 동적 조정 */
+      --controls-offset: 50px;        /* 컨트롤 보일 때 위로 올릴 거리 */
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      height: var(--overlay-h);
+      pointer-events: none;
+      z-index: 2;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
+      overflow: hidden;
+      transition: bottom 0.3s ease, height 0.15s ease;
+    }
+
+    /* 컨트롤이 보일 때 댓글 오버레이를 위로 이동 */
+    .video-container:hover .comments-overlay { bottom: var(--controls-offset); }
+
+    /* 실제 댓글 컨테이너에 mask-image 적용 (가변 stop) */
+    .comments-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      --mask-stop: 82%; /* JS에서 동적 변경 */
+      -webkit-mask-image: linear-gradient(to top, black var(--mask-stop), transparent 100%);
+      mask-image: linear-gradient(to top, black var(--mask-stop), transparent 100%);
+    }
+
+    /* 각 댓글 요소 */
+    .live-comment {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      transition: bottom 0.2s ease, opacity 0.3s ease-in-out;
+    }
+
+    /* 댓글 내용 레이아웃 */
+    .comment-content { display: flex; align-items: flex-start; width: 100%; }
+
+    .text-content { flex: 1; }
+
+    .user-info { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+
+    .username { font-weight: normal; font-size: 14px; }
+
+    .comment-text {
+      font-size: 18px;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      flex: 1;
+    }
+
+    .profile-icon { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+    .profile-photo { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+
+    .likes { display: flex; flex-direction: column; align-items: center; align-self: flex-start; gap: 2px; margin-left: 8px;}
+
+    .heart-icon { 
+      width: 20px; 
+      height: 20px; 
+      fill: #ff0000; 
+      opacity: 1;
+    }
+
+    .likes-number { 
+      color: #ff0000; 
+      font-size: 14px; 
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="video-container">
+    <video id="video-player">
+      <source src="/source/minsunkim/comment/source/videos/S7OWoc-j8qQ.mp4" type="video/mp4" />
+      브라우저가 video 태그를 지원하지 않습니다.
+    </video>
+
+    <!-- 커스텀 비디오 컨트롤 (A 스타일: 플레이/일시정지 + 진행바 + 시간만) -->
+    <div class="custom-controls">
+      <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-handle"></div>
+        </div>
+      </div>
+      <div class="controls-bottom">
+        <button class="control-button" id="play-pause-btn">
+          <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <div class="time-display" id="time-display">0:00 / 0:00</div>
+      </div>
+    </div>
+
+    <!-- 댓글 오버레이 (A 스타일: 높이/마스크 동적) -->
+    <div class="comments-overlay" id="comments-overlay">
+      <div class="comments-container" id="comments-container"></div>
+    </div>
+  </div>
+
+  <script>
+    // 숫자 포맷: 1k 단위
+    function formatLikes(n){
+      if(n < 1000) return n.toString();
+      let f = (n/1000).toFixed(1);
+      if(f.endsWith('.0')) f = f.slice(0,-2);
+      return f + 'k';
+    }
+
+    // mm:ss
+    function formatTime(sec){
+      const m = Math.floor(sec/60);
+      const s = Math.floor(sec%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    // 랜덤 사용자명/색상
+    function getRandomName(){
+      const names = ["Alice","Bob","Charlie","David","Eva","Frank","Grace","Helen","Ivy","Jack"];
+      return names[Math.floor(Math.random()*names.length)];
+    }
+    function getRandomColor(){
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for(let i=0;i<6;i++){ color += letters[Math.floor(Math.random()*16)]; }
+      return color;
+    }
+
+    // 서버에서 주입되는 최적 댓글 리스트
+    var optimalComments = [{"start": 2, "end": 8, "reading time": 6.0, "text": "The part when Marv came through the window and stepped on the Christmas ornaments always cracked me up as a kid😂😂😂", "reward": 7.648452424415286, "correlation": "0.3191488127867097", "likes": 286.0, "norm_likes": 0.9555932579491714, "photo": "https://yt3.ggpht.com/2wV1XpboBAskBKPRGSwoZyYHOXOdgKbCOw_ehQjHNf99881HsGhYdXrFUD4o03cCDk5sf7G0Qw=s88-c-k-c0x00ffffff-no-rj", "author": "@jihyoholic1386"}, {"start": 8, "end": 14, "reading time": 6.0, "text": "I love how he just slams his feet on the the ornaments instead of continuing staying quiet like he was going through the window.", "reward": 5.879696465664008, "correlation": "0.3197490260563533", "likes": 9.0, "norm_likes": 0.6602003848876479, "photo": "https://yt3.ggpht.com/ytc/AIdro_l4BKspMcSN7xYJp-KNeqUzZ62L766xRlts88sRU3ODYA=s88-c-k-c0x00ffffff-no-rj", "author": "@Rypie89"}, {"start": 14, "end": 20, "reading time": 6.0, "text": "0:14 🤣🤣🤣🤣🤣🤣Every year I still laugh at this funny trap on Marv 🤣🤣🤣My favourite Christmas film ever", "reward": 7.973995246413197, "correlation": "0.41928999880310924", "likes": 101.0, "norm_likes": 0.9097092089324237, "photo": "https://yt3.ggpht.com/b_52EA2yLsX3XnIkHZG8lo_uDbqauXZReigW2ndzsf2lbPRUzYtiv3hWtTWzhGnum3TMW3zVZA=s88-c-k-c0x00ffffff-no-rj", "author": "@Mandalorian_Goblinslayer"}, {"start": 20, "end": 25, "reading time": 5.0, "text": "DAAAAAAAAAAAAAAAH AAH GAAH I'M GONNA KILL THAT KID (pop) OOW!!", "reward": 5.890607204595288, "correlation": "0.45973652985215036", "likes": 13.0, "norm_likes": 0.7183849110669073, "photo": "https://yt3.ggpht.com/ytc/AIdro_kKKfR0UhTHVJWFGRkrRE4qgXvGhj2SwH5ihx5rndWlbtY=s88-c-k-c0x00ffffff-no-rj", "author": "@eangsyerbic6942"}, {"start": 25, "end": 28, "reading time": 3.0, "text": "especally id theres a Christmas tree   tree", "reward": 0.9435586513807286, "correlation": "0.3145195504602429", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/ytc/AIdro_nxdqmEtFmX6DwJO__990X_2kPVFuteHEUrj1c76_eDDA=s88-c-k-c0x00ffffff-no-rj", "author": "@jackfrost7819"}, {"start": 28, "end": 34, "reading time": 6.0, "text": "Lol, the ornaments on the floor is always hilarious. Especially when he steps on the yellow one walking away", "reward": 6.410397170284934, "correlation": "0.3618428327583964", "likes": 12.0, "norm_likes": 0.706556695622426, "photo": "https://yt3.ggpht.com/ytc/AIdro_mgQNUsYOVlQ2kB7DGEb9AHfHHh-tkwym0XwSsXalI=s88-c-k-c0x00ffffff-no-rj", "author": "@jonathanredford215"}, {"start": 34, "end": 37, "reading time": 3.0, "text": "Never gets old..The best Christmas movie ♥", "reward": 3.8982878597205066, "correlation": "0.30805666841588536", "likes": 1200.0, "norm_likes": 0.9913726181576169, "photo": "https://yt3.ggpht.com/ytc/AIdro_lSfpp53upx5JpAG4oYAlSSvi929WLRGQxJlJQsWnKud1Q=s88-c-k-c0x00ffffff-no-rj", "author": "@MM-you30"}, {"start": 37, "end": 38, "reading time": 1.0, "text": "Harry!", "reward": 1.1936679311466285, "correlation": "0.464719133417751", "likes": 14.0, "norm_likes": 0.7289487977288776, "photo": "https://yt3.ggpht.com/ytc/AIdro_nsrz4zSg5dCaCCnEm7_KS4-_Sfa1doGWI7EyxUDUrudZ1ahvhxsdDwvXeOce18W0Drwg=s88-c-k-c0x00ffffff-no-rj", "author": "@TravonJamelGreen"}, {"start": 38, "end": 39, "reading time": 1.0, "text": "Harry: Marv!", "reward": 0.6292605869931008, "correlation": "0.6292605869931008", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/ytc/AIdro_mAcusLKQSNrb9ASX0yAhVAR1_6rQcHAqw_O3WaVu9j3cQ=s88-c-k-c0x00ffffff-no-rj", "author": "@michaelnally2841"}, {"start": 39, "end": 43, "reading time": 4.0, "text": "\"Why the hell you dress like a chicken?\" Hahahaha.", "reward": 5.983508295087157, "correlation": "0.550915265397721", "likes": 214.0, "norm_likes": 0.9449618083740683, "photo": "https://yt3.ggpht.com/ytc/AIdro_mz9LGCWX5fFTUYTwOUi4EJ7EG5Cflq2i_XBI-dDg4=s88-c-k-c0x00ffffff-no-rj", "author": "@katiewest9341"}, {"start": 43, "end": 49, "reading time": 6.0, "text": "\"Why the hell did you take your shoes off?\" \"Why the hell are you dressed like a chicken?\" 😂😂😂😂😂", "reward": 9.844067217420893, "correlation": "0.640677869570149", "likes": 2100.0, "norm_likes": 1.0, "photo": "https://yt3.ggpht.com/ytc/AIdro_luHY-nVyOZg8h-yvv2-yMe3CVCGYOPA-pz2-fJVUczW88=s88-c-k-c0x00ffffff-no-rj", "author": "@WildSkateboarder"}, {"start": 49, "end": 51, "reading time": 2.0, "text": "0:49 I slipped and I fell.", "reward": 0.8356426994397972, "correlation": "0.4178213497198986", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/KM2KhYvvSG6kIFQZkNvg5QW-3avjwCmAm0fsIzubUpJ52n4G-4WpwT_XCAXxdpUXp5K-o8hHrAQ=s88-c-k-c0x00ffffff-no-rj", "author": "@TheScribe1.0"}, {"start": 52, "end": 55, "reading time": 3.0, "text": "You Guys Give Up Or Thirsty For More", "reward": 3.6920364420875327, "correlation": "0.6473517349000252", "likes": 6.0, "norm_likes": 0.5833270791291523, "photo": "https://yt3.ggpht.com/ytc/AIdro_n1ilfsCOzaa15YVhPAX3FYPEYdVjntzr08Ck7uwhyv4ew=s88-c-k-c0x00ffffff-no-rj", "author": "@monsterhigh66bratzillaz77"}, {"start": 55, "end": 61, "reading time": 6.0, "text": "Perfect line for a battle. \"You guys give up,or you thirsty for some more?\"", "reward": 8.565122256977757, "correlation": "0.48915362641913146", "likes": 182.0, "norm_likes": 0.9383667497438282, "photo": "https://yt3.ggpht.com/WUbJ4jAY9fIPnrYktPl2rh6xkX8SlAgMf9EP74AdrxeEJeukdwmLk8-QkOc3DLJU8l1VlZGuAg=s88-c-k-c0x00ffffff-no-rj", "author": "@thefairytalefactory.6307"}, {"start": 65, "end": 69, "reading time": 4.0, "text": "1:05 Harry: heads up  Marv: gets hit by the can🤣😂🤣😂🤣😂🤣😂", "reward": 5.389326576004448, "correlation": "0.4704402854708213", "likes": 60.0, "norm_likes": 0.8768913585302907, "photo": "https://yt3.ggpht.com/ytc/AIdro_nqMJZQ0K1ga9K-Nv-QQ-scpDrmVFjDDyTVpHgI8XXHAJQ=s88-c-k-c0x00ffffff-no-rj", "author": "@anunayarai5103"}, {"start": 69, "end": 70, "reading time": 1.0, "text": "Not marv", "reward": 0.48150226474395563, "correlation": "0.48150226474395563", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/aeum5A3p6AIPBLlRmbDqEgVTjmEPvzN7N7sd1Sf9wFmvA9J21CehhAOIAWVGIjHmTdMoqdn8-II=s88-c-k-c0x00ffffff-no-rj", "author": "@Itsonlyme11.11"}, {"start": 70, "end": 76, "reading time": 6.0, "text": "I love how that look of optimism when Marv makes it through the window instantly vanishes as he steps on the ornaments.", "reward": 7.377689589696292, "correlation": "0.3062737689331199", "likes": 131.0, "norm_likes": 0.9233411626829288, "photo": "https://yt3.ggpht.com/ytc/AIdro_k4Ua4IyLS_18iVgvb7O4ERq0xjuUPGw9lzf1CL6yq0G8c=s88-c-k-c0x00ffffff-no-rj", "author": "@ButteredToast32"}, {"start": 76, "end": 77, "reading time": 1.0, "text": "Yes!!!", "reward": 1.1087402964867203, "correlation": "0.5650191179990899", "likes": 5.0, "norm_likes": 0.5437211784876305, "photo": "https://yt3.ggpht.com/ytc/AIdro_nsrz4zSg5dCaCCnEm7_KS4-_Sfa1doGWI7EyxUDUrudZ1ahvhxsdDwvXeOce18W0Drwg=s88-c-k-c0x00ffffff-no-rj", "author": "@TravonJamelGreen"}, {"start": 77, "end": 78, "reading time": 1.0, "text": "Indeed", "reward": 0.8039885409298893, "correlation": "0.31356361288905304", "likes": 4.0, "norm_likes": 0.49042492804083615, "photo": "https://yt3.ggpht.com/ZSqbCihFJqSJ_Yy8zyL6PWdXOXHTM-iXNU8-Lj4FXtGnJlLrM_3L2GC8YHXKTSAu13UNpzRDmw=s88-c-k-c0x00ffffff-no-rj", "author": "@FuryFox-fg1wn"}, {"start": 78, "end": 80, "reading time": 2.0, "text": "Yes hahahahah 😂😂😂😂😀😀😀", "reward": 1.3055305869352878, "correlation": "0.368200843351264", "likes": 2.0, "norm_likes": 0.2845644501163799, "photo": "https://yt3.ggpht.com/guvkcl3Bm-fLRIL7RxG7qyDfUYjIwxs2DH-ieYLMsLSdwtAxNioQmaSyR1NgG3oJjKc3ksRe25Y=s88-c-k-c0x00ffffff-no-rj", "author": "@ary_potr2.048"}, {"start": 82, "end": 88, "reading time": 6.0, "text": "1:22 😂😂 \"He's only a kid, Harry. We can take. Awh, shut up! Will ya! Ooh! What is it? You're missing some teeth.\"", "reward": 9.295256050465468, "correlation": "0.9658822626150925", "likes": 6.0, "norm_likes": 0.5833270791291523, "photo": "https://yt3.ggpht.com/ytc/AIdro_kKKfR0UhTHVJWFGRkrRE4qgXvGhj2SwH5ihx5rndWlbtY=s88-c-k-c0x00ffffff-no-rj", "author": "@eangsyerbic6942"}, {"start": 88, "end": 91, "reading time": 3.0, "text": "1:28 You're missing some teeth.", "reward": 3.8053770006352186, "correlation": "0.7780340721709034", "likes": 4.0, "norm_likes": 0.49042492804083615, "photo": "https://yt3.ggpht.com/M5fuE0IwaRXSDTW_UWbMZy4hncL9YFSyZiwPgtk0qGxPu2qYIYRXl_z7zIQp9F2x2TcypuquFw=s88-c-k-c0x00ffffff-no-rj", "author": "@josephbecker3220"}, {"start": 91, "end": 95, "reading time": 4.0, "text": "@theyakkomanguy7522 wait- Thats my gold tooth...", "reward": 3.590750775173312, "correlation": "0.4072627657524918", "likes": 4.0, "norm_likes": 0.49042492804083615, "photo": "https://yt3.ggpht.com/Gs8eJh2ln4NRGfPuyVj9oncLpcT0X6vdDDYgvv0EeW2OtEDuyVuYG6rtrwV5QU3NyxwYdv4vhQ=s88-c-k-c0x00ffffff-no-rj", "author": "@bowlerrowler"}, {"start": 95, "end": 98, "reading time": 3.0, "text": "ScalyBond 03 did I? where's my golden tooth?", "reward": 3.4000085605312784, "correlation": "0.41495127577685226", "likes": 13.0, "norm_likes": 0.7183849110669073, "photo": "https://yt3.ggpht.com/pU6MTvn3-OFjJGf6r5keGq9QJmO8NGnAijYramM4Yk5uM8wPBBbtaoUX4y8gANGPDFrpYW6rSIU=s88-c-k-c0x00ffffff-no-rj", "author": "@acewitchhunter222"}, {"start": 98, "end": 104, "reading time": 6.0, "text": "1:38 - You bomb me with one more can, kid, and I'll snap off your cajones, and boil them in motor oil!", "reward": 11.206946749214762, "correlation": "1.0", "likes": 53.0, "norm_likes": 0.8678244582024601, "photo": "https://yt3.ggpht.com/ytc/AIdro_lpj3YxRM1MygqcUUk1nL6pyVxoGGFzH-1u4XMRmQS0Rgo=s88-c-k-c0x00ffffff-no-rj", "author": "@jrdavis1992"}, {"start": 104, "end": 110, "reading time": 6.0, "text": "I love when those cans come down and knock Marv and Harry down the steps!!! Lol too funny! Those guys are complete idiots!", "reward": 7.250940223562713, "correlation": "0.3435854381415494", "likes": 51.0, "norm_likes": 0.8649045991189027, "photo": "https://yt3.ggpht.com/ytc/AIdro_mQhQNAFEw6RZv834SA3NVNNBA8DgcDd3-PidekUfGC_WI=s88-c-k-c0x00ffffff-no-rj", "author": "@sportsygirl8"}, {"start": 110, "end": 116, "reading time": 6.0, "text": "Of course, the kid could have told the police that the house was going to be robbed.  And the phones are working...plot hole.", "reward": 7.277985393679258, "correlation": "0.5064408699907839", "likes": 12.0, "norm_likes": 0.706556695622426, "photo": "https://yt3.ggpht.com/ytc/AIdro_lgTlsjjFdGxYf3fNF1yAsYwlSM9hfOG32UFTBWQCI=s88-c-k-c0x00ffffff-no-rj", "author": "@tim72184"}, {"start": 116, "end": 119, "reading time": 3.0, "text": "Hello, my house is being robbed", "reward": 3.2825131655161703, "correlation": "0.3081391703989167", "likes": 22.0, "norm_likes": 0.78603188477314, "photo": "https://yt3.ggpht.com/ytc/AIdro_n5y7cyb6zn3GNrz42dZxqQjFFR_eOamNJwIHaIXbdcU6g=s88-c-k-c0x00ffffff-no-rj", "author": "@ammilligan"}, {"start": 119, "end": 120, "reading time": 1.0, "text": "Home aloneee", "reward": 0.31174552918495285, "correlation": "0.31174552918495285", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/hghrJcMfmlJlZr9q_eFP9pzcKKW2ZSESbtynWf1DBXJWfYsvQ05iNbMVsWToqzpo634ZDTFNdVE=s88-c-k-c0x00ffffff-no-rj", "author": "@syedahuseynova5575"}, {"start": 120, "end": 123, "reading time": 3.0, "text": "That boy in Home Alone is so cute!!!", "reward": 1.0564901625881533, "correlation": "0.3521633875293845", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/aWYjMkfUxXz5zeoIjAvG05QbJBt0MbYqYXVNSz30Mq2OIAK731Qw0WWcN2JucBvWihyq_vkmUzQ=s88-c-k-c0x00ffffff-no-rj", "author": "@alexglass2927"}, {"start": 123, "end": 125, "reading time": 2.0, "text": "Family Guy Home Alone", "reward": 0.7534504442847624, "correlation": "0.3767252221423812", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/XbeVvG-io4HjX5EN70etprMHJofPNytzo1d1NjbrJR9S-_XE-iEMjLPuF3Tc8tn6eoU5R6exXA=s88-c-k-c0x00ffffff-no-rj", "author": "@MissPatricia2521"}, {"start": 125, "end": 128, "reading time": 3.0, "text": "HOME ALONE 1990 🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉", "reward": 1.1136258634223708, "correlation": "0.37120862114079023", "likes": 1.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/ytc/AIdro_k_iHRN_l0TsKsAqRXBnKvUhZMHXsLhXvCXgVIQHJzdJTRw7Wt_G9XEs4chamQySZQzjQ=s88-c-k-c0x00ffffff-no-rj", "author": "@NishantKumar-ep4hw"}, {"start": 128, "end": 134, "reading time": 6.0, "text": "Home Alone will always be a christmas classic. Its one of those movies that you have to watch when its christmas", "reward": 6.8718843953836455, "correlation": "0.3001137997860678", "likes": 40.0, "norm_likes": 0.8452002661112065, "photo": "https://yt3.ggpht.com/ytc/AIdro_lLk_EU05Qlc-M8DrZeBvUOqaSUqRuPxAfumwo2mV4=s88-c-k-c0x00ffffff-no-rj", "author": "@carz1644"}, {"start": 134, "end": 140, "reading time": 6.0, "text": "I watch this every year, this movie is very funny and the pranks on the first film and the second film are just funny and the pranks are the same and a little different", "reward": 6.299056331109631, "correlation": "0.3208939241227275", "likes": 14.0, "norm_likes": 0.7289487977288776, "photo": "https://yt3.ggpht.com/ytc/AIdro_mHsUnrmXUEZiHw7_mtiy5_CyxcsCFW9NAFaI6Omss=s88-c-k-c0x00ffffff-no-rj", "author": "@usuck7945"}];
+
+    // 요소 참조
+    var video=null, commentsContainer=null, commentsOverlay=null;
+    var playPauseBtn=null, playIcon=null, pauseIcon=null;
+    var progressContainer=null, progressBar=null;
+    var timeDisplay=null;
+
+    var isDragging=false;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      video = document.getElementById('video-player');
+      commentsContainer = document.getElementById('comments-container');
+      commentsOverlay = document.getElementById('comments-overlay');
+      playPauseBtn = document.getElementById('play-pause-btn');
+      playIcon = document.getElementById('play-icon');
+      pauseIcon = document.getElementById('pause-icon');
+      progressContainer = document.getElementById('progress-container');
+      progressBar = document.getElementById('progress-bar');
+      timeDisplay = document.getElementById('time-display');
+
+      // start 기준 정렬
+      optimalComments.sort((a,b)=>a.start-b.start);
+
+      // 이벤트 바인딩
+      video.addEventListener('timeupdate', onTimeUpdate);
+      video.addEventListener('loadedmetadata', ()=>{ updateTimeDisplay(); recalcOverlayByComments(); });
+      video.addEventListener('play', updatePlayPauseButton);
+      video.addEventListener('pause', updatePlayPauseButton);
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      progressContainer.addEventListener('click', seekVideo);
+      progressContainer.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', endDrag);
+
+      window.addEventListener('resize', recalcOverlayByComments);
+
+      // 초기 상태
+      updatePlayPauseButton();
+    });
+
+    function togglePlayPause(){ if(video.paused) video.play(); else video.pause(); }
+    function updatePlayPauseButton(){
+      if(video.paused){ playIcon.style.display='block'; pauseIcon.style.display='none'; }
+      else { playIcon.style.display='none'; pauseIcon.style.display='block'; }
+    }
+
+    function updateTimeDisplay(){
+      if(!video.duration) return;
+      const cur = formatTime(video.currentTime);
+      const tot = formatTime(video.duration);
+      timeDisplay.textContent = `${cur} / ${tot}`;
+    }
+
+    function onTimeUpdate(){
+      const t = video.currentTime;
+      // 진행바
+      if(video.duration){ progressBar.style.width = ((t/video.duration)*100) + '%'; }
+      updateTimeDisplay();
+
+      // 댓글 표시/제거
+      optimalComments.forEach(function(cmt, idx){
+        var el = document.getElementById('comment-'+idx);
+        if(cmt.start <= t && t < cmt.end){
+          if(!el) addLiveComment(cmt, idx);
+        } else if(el && t >= cmt.end){
+          el.remove();
+          recalcOverlayByComments();
+        }
+      });
+    }
+
+    function startDrag(e){ isDragging=true; e.preventDefault(); updateVideoTime(e); }
+    function doDrag(e){ if(!isDragging) return; e.preventDefault(); updateVideoTime(e); }
+    function endDrag(){ isDragging=false; }
+    function seekVideo(e){ if(e.type==='click'){ setTimeout(()=>{ if(!isDragging) updateVideoTime(e); },10); } }
+    function updateVideoTime(e){
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left)/rect.width));
+      video.currentTime = pos * video.duration;
+    }
+
+    function addLiveComment(cmt, idx){
+      var div = document.createElement('div');
+      div.className = 'live-comment';
+      div.id = 'comment-' + idx;
+
+      var user = cmt.author || cmt.user || getRandomName();
+      var txt = cmt.text || '';
+      var likes = (cmt.likes !== undefined) ? cmt.likes : 0;
+      var profileColor = getRandomColor();
+      var photo = cmt.photo;
+
+      div.innerHTML = `
+        <div class="comment-content">
+          <div class="text-content">
+            <div class="user-info">
+              ${photo ? `<img class="profile-photo" src="${photo}" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />` : ''}
+              <div class="profile-icon" style="background-color:${profileColor}; display:${photo ? 'none' : 'block'};"></div>
+              <span class="username">${user}</span>
+            </div>
+            <span class="comment-text">${txt}</span>
+          </div>
+          <div class="likes">
+            <svg class="heart-icon" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span class="likes-number">${formatLikes(likes)}</span>
+          </div>
+        </div>`;
+
+      // 등장 애니메이션 기본값
+      div.style.bottom = '10px';
+      div.style.opacity = '0';
+      commentsContainer.appendChild(div);
+      setTimeout(()=>{ div.style.opacity='1'; recalcOverlayByComments(); }, 50);
+    }
+
+    // ===== A 스타일: 댓글 길이에 따라 오버레이 높이와 마스크 가변 =====
+    const OVERLAY_PADDING = 20; // 하단 여백
+    const OVERLAY_MIN = 88;     // 최소 높이
+    const OVERLAY_MAX_RATIO = 0.55; // 비디오 높이 대비 최대 비율
+    const USERINFO_EXTRA = 26;  // user-info 라인 여유치
+
+    function clampOverlayHeight(px){
+      const vc = document.querySelector('.video-container');
+      const vh = vc?.getBoundingClientRect().height || 0;
+      const maxH = vh ? Math.floor(vh * OVERLAY_MAX_RATIO) : 260;
+      return Math.max(OVERLAY_MIN, Math.min(px, maxH));
+    }
+
+    function recalcOverlayByComments(){
+      const visibles = Array.from(commentsContainer.querySelectorAll('.live-comment'));
+      if(visibles.length === 0){
+        const h = clampOverlayHeight(OVERLAY_MIN);
+        commentsOverlay.style.setProperty('--overlay-h', h + 'px');
+        commentsContainer.style.setProperty('--mask-stop', '35%');
+        return;
+      }
+
+      let maxCardH = 0;
+      visibles.forEach(el=>{ const r = el.getBoundingClientRect(); maxCardH = Math.max(maxCardH, r.height); });
+
+      const desired = clampOverlayHeight(Math.ceil(maxCardH + OVERLAY_PADDING + USERINFO_EXTRA));
+      commentsOverlay.style.setProperty('--overlay-h', desired + 'px');
+
+      let maskStop = 45;
+      if(desired > 120) maskStop = 55;
+      if(desired > 160) maskStop = 65;
+      if(desired > 200) maskStop = 72;
+      commentsContainer.style.setProperty('--mask-stop', maskStop + '%');
+    }
+  </script>
+</body>
+</html>
