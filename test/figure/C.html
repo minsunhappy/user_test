@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Polar Bear vs Walrus | Planet Earth | BBC Earth</title>
+  <style>
+    /* 기본 스타일 */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #fff; /* 흰색 배경 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .video-title {
+      width: 800px;
+      margin-top: 40px;
+      margin-bottom: 5px;
+      text-align: left;
+      font-size: 20px;
+      font-weight: 600;
+      color: #000;
+      padding: 0;
+      line-height: 1.4;
+    }
+
+    .video-container {
+      width: 800px;
+      margin-top: 20px;
+      position: relative;
+      background-color: #000;
+      overflow: hidden;
+      border-radius: 20px; /* 유튜브 느낌의 둥근 모서리 */
+      transition: all 0.3s ease;
+    }
+
+    video {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: 12px; /* 비디오 둥근 모서리 */
+    }
+
+    /* 기본 비디오 컨트롤 완전히 숨기기 */
+    video::-webkit-media-controls-panel { display: none !important; }
+    video::-webkit-media-controls-play-button { display: none !important; }
+    video::-webkit-media-controls-start-playback-button { display: none !important; }
+    video::-moz-media-controls { display: none !important; }
+    video::--ms-media-controls { display: none !important; }
+
+    /* 커스텀 비디오 컨트롤 */
+    .custom-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.8);
+      padding: 4px 15px 4px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 4;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .video-container:hover .custom-controls { opacity: 1; }
+
+    /* 진행 바 컨테이너 */
+    .progress-container {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      margin-bottom: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    /* 진행 바 */
+    .progress-bar {
+      height: 100%;
+      background: #ff0000;
+      border-radius: 3px;
+      width: 0%;
+      position: relative;
+      transition: width 0.1s ease;
+    }
+
+    /* 진행 바 끝 동그라미 */
+    .progress-handle {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: #ff0000;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .progress-container:hover .progress-handle { opacity: 1; }
+
+    /* 컨트롤 버튼들 */
+    .controls-bottom {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 3px;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-button:hover { background-color: rgba(255,255,255,0.2); }
+
+    .control-button svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    /* 시간 표시 */
+    .time-display {
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* ===================== 댓글 오버레이 (A 스타일) ===================== */
+    .comments-overlay {
+      --overlay-h: 220px;             /* JS에서 동적 조정 */
+      --controls-offset: 50px;        /* 컨트롤 보일 때 위로 올릴 거리 */
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      height: var(--overlay-h);
+      pointer-events: none;
+      z-index: 2;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
+      overflow: hidden;
+      transition: bottom 0.3s ease, height 0.15s ease;
+    }
+
+    /* 컨트롤이 보일 때 댓글 오버레이를 위로 이동 */
+    .video-container:hover .comments-overlay { bottom: var(--controls-offset); }
+
+    /* 실제 댓글 컨테이너에 mask-image 적용 (가변 stop) */
+    .comments-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      --mask-stop: 82%; /* JS에서 동적 변경 */
+      -webkit-mask-image: linear-gradient(to top, black var(--mask-stop), transparent 100%);
+      mask-image: linear-gradient(to top, black var(--mask-stop), transparent 100%);
+    }
+
+    /* 각 댓글 요소 */
+    .live-comment {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      transition: bottom 0.2s ease, opacity 0.3s ease-in-out;
+    }
+
+    /* 댓글 내용 레이아웃 */
+    .comment-content { display: flex; align-items: flex-start; width: 100%; }
+
+    .text-content { flex: 1; }
+
+    .user-info { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+
+    .username { font-weight: normal; font-size: 14px; }
+
+    .comment-text {
+      font-size: 18px;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      flex: 1;
+    }
+
+    .profile-icon { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+    .profile-photo { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+
+    .likes { display: flex; flex-direction: column; align-items: center; align-self: flex-start; gap: 2px; margin-left: 8px;}
+
+    .heart-icon { 
+      width: 20px; 
+      height: 20px; 
+      fill: #ff0000; 
+      opacity: 1;
+    }
+
+    .likes-number { 
+      color: #ff0000; 
+      font-size: 14px; 
+      opacity: 1;
+    }
+  </style>
+</head>
+  <body>
+    <!-- 제목을 영상 위에 배치 -->
+    <div class="video-title">Polar Bear vs Walrus | Planet Earth | BBC Earth</div>
+    <div class="video-container">
+    <video id="video-player">
+      <source src="./PvWLbK_mNw0.mp4" type="video/mp4" />
+      브라우저가 video 태그를 지원하지 않습니다.
+    </video>
+
+    <!-- 커스텀 비디오 컨트롤 (A 스타일: 플레이/일시정지 + 진행바 + 시간만) -->
+    <div class="custom-controls">
+      <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-handle"></div>
+        </div>
+      </div>
+      <div class="controls-bottom">
+        <button class="control-button" id="play-pause-btn">
+          <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <div class="time-display" id="time-display">0:00 / 0:00</div>
+      </div>
+    </div>
+
+    <!-- 댓글 오버레이 (A 스타일: 높이/마스크 동적) -->
+    <div class="comments-overlay" id="comments-overlay">
+      <div class="comments-container" id="comments-container"></div>
+    </div>
+  </div>
+
+  <script>
+    // 숫자 포맷: 1k 단위
+    function formatLikes(n){
+      if(n < 1000) return n.toString();
+      let f = (n/1000).toFixed(1);
+      if(f.endsWith('.0')) f = f.slice(0,-2);
+      return f + 'k';
+    }
+
+    // mm:ss
+    function formatTime(sec){
+      const m = Math.floor(sec/60);
+      const s = Math.floor(sec%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    // 랜덤 사용자명/색상
+    function getRandomName(){
+      const names = ["Alice","Bob","Charlie","David","Eva","Frank","Grace","Helen","Ivy","Jack"];
+      return names[Math.floor(Math.random()*names.length)];
+    }
+    function getRandomColor(){
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for(let i=0;i<6;i++){ color += letters[Math.floor(Math.random()*16)]; }
+      return color;
+    }
+
+    // 서버에서 주입되는 최적 댓글 리스트
+    var optimalComments = [{"start": 0, "end": 4, "reading time": 4.0, "text": "now the polar bear turns towards the photographer", "reward": 6.573161806638396, "correlation": "0.6512002168337387", "corr_A": "0.48", "corr_V": "0.79", "likes": 7400.0, "norm_likes": 0.9920902348258601, "photo": "https://yt3.ggpht.com/Tv6nv-oNAEVGv6nineM15ivnr18e84KLrQNNy1BT1fEJx8v15hKfsMAVQ86FoBAsixefyrfG4w=s88-c-k-c0x00ffffff-no-rj", "author": "@lordemarsh6804"}, {"start": 4, "end": 10, "reading time": 6.0, "text": "Poor Bear, imagine starving and surrounded by food and not be able to catch it. Must be frustrating", "reward": 9.381215423088847, "correlation": "0.5809503096749826", "corr_A": "0.59", "corr_V": "0.57", "likes": 3200.0, "norm_likes": 0.9825855941731584, "photo": "https://yt3.ggpht.com/ytc/AIdro_lnXIyba_p7LxRiB2wT8ffbsCPdapknxkTqD6VtgX_H_6I=s88-c-k-c0x00ffffff-no-rj", "author": "@auriel8300"}, {"start": 10, "end": 16, "reading time": 6.0, "text": "This just shows how brave and aggressive a polar bear is!  That whole attack seemed pointless and a waste of energy..  I would be terrified if I encountered one in the wild.", "reward": 8.566349896584555, "correlation": "0.4885965041559326", "corr_A": "0.0", "corr_V": "0.69", "likes": 425.0, "norm_likes": 0.9391284786081598, "photo": "https://yt3.ggpht.com/iXgavCM_aHBfpwrQLa2slEq-a0td7zQcgmkuTsZo_SOBSQ9gH-EMsb--ROLzgCLxaRsrEB568w=s88-c-k-c0x00ffffff-no-rj", "author": "@nonyabiz9487"}, {"start": 16, "end": 22, "reading time": 6.0, "text": "Narrator: They are the largest seals in the world  Me: They dont look that tough  Narrator: They weigh over a ton  Me: Aight ima head out", "reward": 8.810527389400209, "correlation": "0.5023215425961719", "corr_A": "0.3", "corr_V": "0.64", "likes": 1200.0, "norm_likes": 0.9660996889705294, "photo": "https://yt3.ggpht.com/ytc/AIdro_nlLnrPnL00cFat44j6TGp83a8ugPD3sGE5cinCelk=s88-c-k-c0x00ffffff-no-rj", "author": "@luisalcocer5095"}, {"start": 22, "end": 26, "reading time": 4.0, "text": "Bear tries to eat walrus Seagulls: Interesting", "reward": 5.9351477015493135, "correlation": "0.5195143377140058", "corr_A": "0.45", "corr_V": "0.58", "likes": 1100.0, "norm_likes": 0.9642725876733225, "photo": "https://yt3.ggpht.com/ytc/AIdro_lgPk7Gkt8b8HNTsoXfpXCh-sIiaXI4i7h9hp23s9lKAiY=s88-c-k-c0x00ffffff-no-rj", "author": "@SmartBoy-ku7rq"}, {"start": 26, "end": 27, "reading time": 1.0, "text": "Poor Bear", "reward": 1.441400668325579, "correlation": "0.4709166165819109", "corr_A": "0.48", "corr_V": "0.46", "likes": 1500.0, "norm_likes": 0.9704840517436679, "photo": "https://yt3.ggpht.com/ytc/AIdro_kPHTnWNm6UIoi_cRrWQy0GCBxGodMzZfle6qY6AmI=s88-c-k-c0x00ffffff-no-rj", "author": "@cagedtigersteve"}, {"start": 27, "end": 33, "reading time": 6.0, "text": "anyone else not get why the thousands of walruses dont just gang on the polar bear?", "reward": 9.486784839118775, "correlation": "0.6242837887705713", "corr_A": "0.0", "corr_V": "0.88", "likes": 796.0, "norm_likes": 0.9568470177492244, "photo": "https://yt3.ggpht.com/S1oE2B8xqfH2s1Um8Om2F7oRfU1RSyRMFrXpwVIG81k6LdfnlevGJhMN4X9i6iK2dTiS2JjB=s88-c-k-c0x00ffffff-no-rj", "author": "@mrmoojaki865"}, {"start": 33, "end": 38, "reading time": 5.0, "text": "\"The Walruses sense they're in danger,\" 10,000 walruses-1 bear.", "reward": 7.997239055123469, "correlation": "0.6616463894298714", "corr_A": "0.25", "corr_V": "0.9", "likes": 408.0, "norm_likes": 0.9378014215948223, "photo": "https://yt3.ggpht.com/ytc/AIdro_lMzs3aHmMOZFlqMsNqXG0rAXqWVg_nz2o0YApFb2J8LEg=s88-c-k-c0x00ffffff-no-rj", "author": "@artsmart"}, {"start": 38, "end": 44, "reading time": 6.0, "text": "That made me realise how strong walruses are after a polar bear trying to taking them down", "reward": 9.53348134340117, "correlation": "0.6606752902513459", "corr_A": "0.0", "corr_V": "0.93", "likes": 310.0, "norm_likes": 0.9282382669821826, "photo": "https://yt3.ggpht.com/_Z4vKmYyZ5TQWvWWFHwsl2WLOQN6FG475SOZsG-xZmknNNgubNvh2r3A9E7QbsvArJ_ygsMbAg=s88-c-k-c0x00ffffff-no-rj", "author": "@PikoroxFraxx"}, {"start": 44, "end": 50, "reading time": 6.0, "text": "Problem with the Walruses are that when the Polar Bear is attacking one of their kind, the others are just looking around rather than attacking the bear with their 1 meter long tusks.", "reward": 9.304376604198977, "correlation": "0.6781484673580496", "corr_A": "0.09", "corr_V": "0.96", "likes": 97.0, "norm_likes": 0.8725809666751133, "photo": "https://yt3.ggpht.com/ytc/AIdro_lf0wdHCZ1wREH0g2c1K2PbNPIW-stflCcBeJi6Z4A=s88-c-k-c0x00ffffff-no-rj", "author": "@siddharthakakati949"}, {"start": 50, "end": 55, "reading time": 5.0, "text": "Polar bear is big , but man walrus making em look like  midget", "reward": 8.08471477882738, "correlation": "0.6255213158103988", "corr_A": "0.45", "corr_V": "0.76", "likes": 6900.0, "norm_likes": 0.991421639955077, "photo": "https://yt3.ggpht.com/ytc/AIdro_mloE9Xjt0xmjTh_DBZB56Ign5CcgyEeD2Q40Cp5tZYIVQ=s88-c-k-c0x00ffffff-no-rj", "author": "@motodxplorer1611"}, {"start": 55, "end": 61, "reading time": 6.0, "text": "I went straight from worrying for the walruses to being sorry for the bear. I mean, not eating for a few months, and that wall of tusks looked like an army of swordsmen on guard.", "reward": 9.300419605202542, "correlation": "0.5603977349683124", "corr_A": "0.37", "corr_V": "0.7", "likes": 5800.0, "norm_likes": 0.9896721992321116, "photo": "https://yt3.ggpht.com/ytc/AIdro_m_u6nZ8v4-g53yu9qmpZRPbvWP9tnT8CAYcigk5vY=s88-c-k-c0x00ffffff-no-rj", "author": "@PlayingTarot"}, {"start": 61, "end": 63, "reading time": 2.0, "text": "Polar Bear in Antarctica?", "reward": 2.8297737840702943, "correlation": "0.49104602950103443", "corr_A": "0.13", "corr_V": "0.68", "likes": 276.0, "norm_likes": 0.9238408625341127, "photo": "https://yt3.ggpht.com/ytc/AIdro_nCmp_qsY3qJidMoMn0umdtV1wyq7-QEsn-uw_0Ht0xiA=s88-c-k-c0x00ffffff-no-rj", "author": "@koob1413"}, {"start": 63, "end": 69, "reading time": 6.0, "text": "While the comments are mainly attributing the escape of the Walruses due to their built-in defensive structure, I think it should also be attributed to the fact that they're in a herd. If the Polar bear managed to find a group with even lesser Walruses then the bear would've gotten one.", "reward": 9.03423523867815, "correlation": "0.6236269746087888", "corr_A": "0.06", "corr_V": "0.88", "likes": 114.0, "norm_likes": 0.8820788985042359, "photo": "https://yt3.ggpht.com/ytc/AIdro_khBTmECFl2tBtjcwsWvEaaoeEuVG98QDwsIqiMi-8PXg=s88-c-k-c0x00ffffff-no-rj", "author": "@buenvidanadz1969"}, {"start": 69, "end": 73, "reading time": 4.0, "text": "I did NOT realize walruses were THAT massive. Wow!", "reward": 6.141351273415296, "correlation": "0.5409296860697264", "corr_A": "0.08", "corr_V": "0.76", "likes": 9600.0, "norm_likes": 0.9944081322840976, "photo": "https://yt3.ggpht.com/8pn5CHaM_xsvbshg7eiBpm5ZdDpE0s37YrNm4Jp3iNC1wWDqRQyDUnqlqqmRJlr93L6aCTo0ZQ=s88-c-k-c0x00ffffff-no-rj", "author": "@Polydueces"}, {"start": 73, "end": 79, "reading time": 6.0, "text": "Gotta love how 99% of Walruses don't give a shit that someone is trying to eat one of their own.", "reward": 8.894702444722114, "correlation": "0.49416086505163004", "corr_A": "0.0", "corr_V": "0.7", "likes": 5100.0, "norm_likes": 0.9882895424020556, "photo": "https://yt3.ggpht.com/ytc/AIdro_m1zc1IZ8X5a_PBB-BVZwHSmJjiE2tUCLgmNxwBHC_7GlQ=s88-c-k-c0x00ffffff-no-rj", "author": "@subira8518"}, {"start": 79, "end": 85, "reading time": 6.0, "text": "Not even the walruses getting attacked seem to care much, they just kinda squirm a little bit more and that's it", "reward": 8.98508538719031, "correlation": "0.5478752846063465", "corr_A": "0.2", "corr_V": "0.75", "likes": 604.0, "norm_likes": 0.9496389465920385, "photo": "https://yt3.ggpht.com/ytc/AIdro_nnp4uYSWQg8BqibH1iVwaIj-t9zYROB0IB6Si6XGha5nI=s88-c-k-c0x00ffffff-no-rj", "author": "@tidepodpadthai2633"}, {"start": 85, "end": 91, "reading time": 6.0, "text": "burteriksson  polar bears are constantly looking for food. Why would they \"play\" with their prey", "reward": 8.845380426015305, "correlation": "0.5222221057941897", "corr_A": "0.0", "corr_V": "0.74", "likes": 659.0, "norm_likes": 0.9520079652083613, "photo": "https://yt3.ggpht.com/ytc/AIdro_nqTjYMCnXa8BW7e84V7d7kkGOyzImXQRc_GKUuaYT1aIc=s88-c-k-c0x00ffffff-no-rj", "author": "@nominis4523"}, {"start": 91, "end": 96, "reading time": 5.0, "text": "That bear is stuck in the friend zone.. No penetration here!", "reward": 7.78094217816083, "correlation": "0.5798410031711118", "corr_A": "0.56", "corr_V": "0.6", "likes": 2100.0, "norm_likes": 0.9763474324610542, "photo": "https://yt3.ggpht.com/ytc/AIdro_ng7E9hMpCUjR2lz-LV7zHWp8AeddaMXqFLlvvgFOg=s88-c-k-c0x00ffffff-no-rj", "author": "@Bursted15"}, {"start": 96, "end": 102, "reading time": 6.0, "text": "They don't have much to worry about. It's a bit daft for a polar bear to go for something its teeth can't penetrate.", "reward": 9.484748545806287, "correlation": "0.6380987927959149", "corr_A": "0.6", "corr_V": "0.68", "likes": 476.0, "norm_likes": 0.9426926315051328, "photo": "https://yt3.ggpht.com/TGQG7zatl7VJ27OvPK93R2zgVaHVQKEcLerGd-i0a2zbHT-YrCRSMsKcJAn0rP4WPbELAwd6=s88-c-k-c0x00ffffff-no-rj", "author": "@magalaleo9949"}, {"start": 102, "end": 107, "reading time": 5.0, "text": "If I were the bear I'd be testing out how fast the cameraman can run.", "reward": 7.224061779597704, "correlation": "0.4474736572470246", "corr_A": "0.0", "corr_V": "0.63", "likes": 14000.0, "norm_likes": 0.9973386986725162, "photo": "https://yt3.ggpht.com/ytc/AIdro_k6jXnkG6YLwYeDavY06DIw3kPXtEyuEvn3zOYfm-Y=s88-c-k-c0x00ffffff-no-rj", "author": "@rjk69"}, {"start": 107, "end": 109, "reading time": 2.0, "text": "*Photographer kills the bear", "reward": 2.6869782060667986, "correlation": "0.43132209790018483", "corr_A": "0.51", "corr_V": "0.33", "likes": 208.0, "norm_likes": 0.9121670051332145, "photo": "https://yt3.ggpht.com/ytc/AIdro_kv9AR1uYHxurA2yJRRZviWcgpRrwh9SouEyEJrt_kD8LY=s88-c-k-c0x00ffffff-no-rj", "author": "@MrBlues113"}, {"start": 109, "end": 115, "reading time": 6.0, "text": "Their instinct is to  protect their  young  first...That's  why they  huddle  up in a  big  circle  with  the young  inside....If  several of them try to  waddle  after the  polar bear  they  cant  do  much..the bear is  to  fast for  them on land.. that  would leave a  opening for  the  bear  to  go and  penetrate  the  circle...Thats  just  what the bear is  hoping  for.", "reward": 9.508808243712211, "correlation": "0.6670707383209291", "corr_A": "0.64", "corr_V": "0.69", "likes": 237.0, "norm_likes": 0.9177306356311061, "photo": "https://yt3.ggpht.com/lJCuONvmo5i5xlULEou13XPB3J64R4tRz8ZG9NG7zmMQwh4BP41nCwURj6YOClMv0xskD1Rbwg=s88-c-k-c0x00ffffff-no-rj", "author": "@davidsnyderWisdomTrollBlocker"}, {"start": 115, "end": 121, "reading time": 6.0, "text": "@PikoroxFraxx  The fact Polar Bears are massive and he looks small trying to take a Walrus down is crazy", "reward": 8.674451075090094, "correlation": "0.49542704408011057", "corr_A": "0.03", "corr_V": "0.7", "likes": 619.0, "norm_likes": 0.9503148017682382, "photo": "https://yt3.ggpht.com/r3tqxmEt72SzaIsyHObpvPA8_1VmgCDPZ-rQE1qxtMaeX-9tijDnAu8eIHpgmbotcMBGOErTfg=s88-c-k-c0x00ffffff-no-rj", "author": "@firingallcylinders2949"}, {"start": 121, "end": 123, "reading time": 2.0, "text": "I felt sorry for the bear", "reward": 3.1338571672975553, "correlation": "0.6047375224275937", "corr_A": "0.65", "corr_V": "0.55", "likes": 1000.0, "norm_likes": 0.962191061221184, "photo": "https://yt3.ggpht.com/ytc/AIdro_m1PxmmCOXmk8rT0UN2e42DDLwzYf-Mdt224AsGIC6EuZMG=s88-c-k-c0x00ffffff-no-rj", "author": "@GabrielPereira-ud3ph"}, {"start": 123, "end": 125, "reading time": 2.0, "text": "The bear needs to eat!", "reward": 3.0761648254813725, "correlation": "0.6785677903999348", "corr_A": "0.76", "corr_V": "0.59", "likes": 79.0, "norm_likes": 0.8595146223407514, "photo": "https://yt3.ggpht.com/ytc/AIdro_nu2AJd6iNvBvPOkldrhYUDK2g3prRGh_yYAndPGiE=s88-c-k-c0x00ffffff-no-rj", "author": "@jeffsnow7749"}, {"start": 125, "end": 131, "reading time": 6.0, "text": "Usually I root for the prey to escape but here, I'm also worried the polar bear isn't getting enough food", "reward": 9.515749293491409, "correlation": "0.6546920425782646", "corr_A": "0.67", "corr_V": "0.64", "likes": 337.0, "norm_likes": 0.9312661730036367, "photo": "https://yt3.ggpht.com/XjIuUmoApTnigKb8tkQRBhOTEA3ybe51eXuqCkArkbf4cr6QINHubAf8vxEowS8W6sA5ysfKWA=s88-c-k-c0x00ffffff-no-rj", "author": "@FishandShips"}, {"start": 131, "end": 134, "reading time": 3.0, "text": "I am the bear, the walrus is the money... :(", "reward": 4.2709046190895315, "correlation": "0.4480859034637948", "corr_A": "0.0", "corr_V": "0.63", "likes": 2000.0, "norm_likes": 0.9755489695660491, "photo": "https://yt3.ggpht.com/ytc/AIdro_kyQfI_XkIw2fiwPAvfcRN7sxgFkVa-NlDwun50dR0jDmo=s88-c-k-c0x00ffffff-no-rj", "author": "@natanoeldeoliveirajunior822"}, {"start": 134, "end": 137, "reading time": 3.0, "text": "Wow had no idea Walrus's were this massive", "reward": 4.369577207658268, "correlation": "0.540412845077887", "corr_A": "0.0", "corr_V": "0.76", "likes": 228.0, "norm_likes": 0.9161128908082022, "photo": "https://yt3.ggpht.com/lNHK_DspUZSEQo5dXEQnf68Hit7HkbVmKjPypoPBeUpbJbHmWYg39BTv8rx5hgF7YEOg1psbNA=s88-c-k-c0x00ffffff-no-rj", "author": "@TheMilfhunter88"}, {"start": 137, "end": 141, "reading time": 4.0, "text": "\"the chance of his first meal in months is slipping away \"", "reward": 5.994145565305871, "correlation": "0.6894299766512038", "corr_A": "0.94", "corr_V": "0.26", "likes": 41.0, "norm_likes": 0.8091064146752639, "photo": "https://yt3.ggpht.com/ytc/AIdro_mx6CSN2OkXewNCJiQiR0L9kcSS_GyWN5puBQmj0FVu=s88-c-k-c0x00ffffff-no-rj", "author": "@inunganbasoraisam7640"}, {"start": 141, "end": 147, "reading time": 6.0, "text": "All the other walruses that are not attacked: Understandable, have a great day", "reward": 8.663496980320796, "correlation": "0.48882315987966374", "corr_A": "0.0", "corr_V": "0.69", "likes": 742.0, "norm_likes": 0.9550930035071354, "photo": "https://yt3.ggpht.com/63kFXN4T0zm1oFxCzCYCY0n3d47Udn808OAfqbNty6uQZQCl_UJJcGS9VxKmSKnFFrvNXWR46ag=s88-c-k-c0x00ffffff-no-rj", "author": "@danielortega6035"}, {"start": 147, "end": 153, "reading time": 6.0, "text": "Then he came to the cameraman and asked if there was any job for him. And now we see the polar bear working for coca cola", "reward": 8.616894317146041, "correlation": "0.45068970682069254", "corr_A": "0.27", "corr_V": "0.58", "likes": 4000.0, "norm_likes": 0.9854593460369809, "photo": "https://yt3.ggpht.com/ytc/AIdro_kER8xJydHNwgPTUgkyjQmx2JIs_yZmrAmA5yca7Zq7cA=s88-c-k-c0x00ffffff-no-rj", "author": "@01killyou"}, {"start": 153, "end": 159, "reading time": 6.0, "text": "Holy crap. Have always thought of polar bears as killing machines. Had no idea walrus hide was that ridiculously strong", "reward": 9.213859332511484, "correlation": "0.563967699114837", "corr_A": "0.0", "corr_V": "0.8", "likes": 1600.0, "norm_likes": 0.9716755229704105, "photo": "https://yt3.ggpht.com/ytc/AIdro_kfXOxtfubiCtDuSiONYbL28UVSUIt8U06cbAJtEYwxmQ=s88-c-k-c0x00ffffff-no-rj", "author": "@jimsawyer6955"}, {"start": 159, "end": 165, "reading time": 6.0, "text": "imagine if the walruses were intelligent enough to actually fight back together, the polar bear would be super dead and they'd have a meal", "reward": 9.247040444313438, "correlation": "0.6940923114821914", "corr_A": "0.36", "corr_V": "0.91", "likes": 66.0, "norm_likes": 0.8470810959033814, "photo": "https://yt3.ggpht.com/CvxwtvfuA6zVQPekxKDetOClzzH_ZwKHoSj3hLVgNkQizysHQ72-M_c4gSWSiDWJ-5TkiZm_=s88-c-k-c0x00ffffff-no-rj", "author": "@SalreixVonOtsuu"}, {"start": 165, "end": 166, "reading time": 1.0, "text": "Walrus orgy", "reward": 1.3476551540674613, "correlation": "0.4140711052049335", "corr_A": "0.0", "corr_V": "0.59", "likes": 360.0, "norm_likes": 0.9335840488625278, "photo": "https://yt3.ggpht.com/ytc/AIdro_nVbuY-OBOo3s1wt9ro_K3nR6PlrLfwH08tt4uLIUlVOQ=s88-c-k-c0x00ffffff-no-rj", "author": "@ultrainstincts6943"}, {"start": 166, "end": 172, "reading time": 6.0, "text": "Beartic uses ice punch attacking aggressively, but unfortunately Walrein with thick fat ability able to withstand the attack and got away safely!", "reward": 9.552408825482201, "correlation": "0.6574490783433767", "corr_A": "0.53", "corr_V": "0.76", "likes": 371.0, "norm_likes": 0.9346190592369902, "photo": "https://yt3.ggpht.com/ytc/AIdro_nQS9spVLSouTxwOFIcoDxmymWq5tv6tF2vLbchzM4=s88-c-k-c0x00ffffff-no-rj", "author": "@YHChiu-jy2yi"}, {"start": 172, "end": 176, "reading time": 4.0, "text": "Those walruses really know how to help a dying friend", "reward": 5.9832257946930945, "correlation": "0.522040046741412", "corr_A": "0.32", "corr_V": "0.66", "likes": 1800.0, "norm_likes": 0.9737664019318616, "photo": "https://yt3.ggpht.com/6zj2d7QwaX7RgHJRiLvH4A4SmYFJVXIB8I7K7vQwmGkDU8TWr2UNc9s5WXniq040TRgsba4W=s88-c-k-c0x00ffffff-no-rj", "author": "@JCProPainting"}, {"start": 176, "end": 180, "reading time": 4.0, "text": "ive never thought about how incredibly weird Walruses are.", "reward": 5.789553957676986, "correlation": "0.5052840715891016", "corr_A": "0.0", "corr_V": "0.71", "likes": 467.0, "norm_likes": 0.942104417830145, "photo": "https://yt3.ggpht.com/ytc/AIdro_nx8V1zKHKz_3rxmjsAVWglqlihNXyZamoS0qbLwAQg=s88-c-k-c0x00ffffff-no-rj", "author": "@PennyDreadful1"}, {"start": 180, "end": 183, "reading time": 3.0, "text": "Unfortunately the bear died...", "reward": 4.922580023728664, "correlation": "0.7010593131160483", "corr_A": "0.76", "corr_V": "0.63", "likes": 434.0, "norm_likes": 0.9398006947935066, "photo": "https://yt3.ggpht.com/ytc/AIdro_lNg3ZLmxpQE-e-hfN_x4FfXa1PuSUF99T4OFvDA-PIsU0=s88-c-k-c0x00ffffff-no-rj", "author": "@Dinotopia-"}, {"start": 183, "end": 189, "reading time": 6.0, "text": "I feel bad for the bear....Imagine starving to death in front of a huge can of food that you can't open !?!", "reward": 9.682551158915025, "correlation": "0.6515674652646536", "corr_A": "0.75", "corr_V": "0.54", "likes": 1000.0, "norm_likes": 0.962191061221184, "photo": "https://yt3.ggpht.com/ytc/AIdro_keYBtMME3f1g-8YbVl54JDi_TAkZ-izvg--tpPhrU=s88-c-k-c0x00ffffff-no-rj", "author": "@peristerasperisteropoulos1263"}, {"start": 189, "end": 191, "reading time": 2.0, "text": "Lol😁 that bear is a noob😁😁😁", "reward": 2.5626206713423483, "correlation": "0.4126708670838768", "corr_A": "0.0", "corr_V": "0.58", "likes": 91.0, "norm_likes": 0.8686394685872973, "photo": "https://yt3.ggpht.com/ytc/AIdro_k1gFsTAu9MIq__Rmswk_Bw-Kg4kRFB2VgNI-TLNOaSRTA=s88-c-k-c0x00ffffff-no-rj", "author": "@vipulforyou"}, {"start": 191, "end": 193, "reading time": 2.0, "text": "\"it slips from his grasp\"", "reward": 3.008977988468926, "correlation": "0.6975726273677945", "corr_A": "0.94", "corr_V": "0.31", "likes": 40.0, "norm_likes": 0.8069163668666687, "photo": "https://yt3.ggpht.com/ytc/AIdro_lUIvpCipqTUminErW4QtGQb3TIvzroVO0ztx-3Siw=s88-c-k-c0x00ffffff-no-rj", "author": "@CJPS14"}, {"start": 193, "end": 196, "reading time": 3.0, "text": "Photographer hands Polar Bear a Coca-Cola", "reward": 4.224396735391958, "correlation": "0.5227119533856919", "corr_A": "0.25", "corr_V": "0.7", "likes": 121.0, "norm_likes": 0.8854202917449606, "photo": "https://yt3.ggpht.com/ytc/AIdro_n6_V8HNbozU_Kai4hXUzItC9RsJXEMbmnCrOxfnDg=s88-c-k-c0x00ffffff-no-rj", "author": "@justintorres403"}, {"start": 196, "end": 202, "reading time": 6.0, "text": "There are many animals that can do that, most are in the ocean but there are a lot of land animals that would beat a polar bear in a fight, obvious being an elephant but a hippo and elephant seal would too", "reward": 8.556363500394506, "correlation": "0.5384183383465985", "corr_A": "0.0", "corr_V": "0.76", "likes": 126.0, "norm_likes": 0.8876422450524857, "photo": "https://yt3.ggpht.com/ytc/AIdro_kLQGYEWMT4iA_9HmsU1PkaIwTqFfy8-KTRk5HBwB4=s88-c-k-c0x00ffffff-no-rj", "author": "@chipbutty3645"}, {"start": 202, "end": 208, "reading time": 6.0, "text": "Camera man: so beautiful nature at its best  Walrus:*screaming in pain* heellpp me", "reward": 7.911948103250827, "correlation": "0.3345211773516205", "corr_A": "0.0", "corr_V": "0.47", "likes": 3600.0, "norm_likes": 0.9841368398568507, "photo": "https://yt3.ggpht.com/ytc/AIdro_ntb-TqQUxGldjmwQSfkSnSTWgKLHsRHShQ-mq6pewVUXs=s88-c-k-c0x00ffffff-no-rj", "author": "@gamertags2332"}, {"start": 208, "end": 214, "reading time": 6.0, "text": "How can anybody dislike any animal documentary made by Sir David he's a legend", "reward": 7.759482383258096, "correlation": "0.34906073899118467", "corr_A": "0.0", "corr_V": "0.49", "likes": 500.0, "norm_likes": 0.9441863248851647, "photo": "https://yt3.ggpht.com/O25injFjs6ZyDwR3gShmM_M9ehw2bLFAVixDmbBWhBErI2e-LY4YLOqXaCHdAge3JoB2FpsUsVw=s88-c-k-c0x00ffffff-no-rj", "author": "@calt1296"}];
+
+    // 요소 참조
+    var video=null, commentsContainer=null, commentsOverlay=null;
+    var playPauseBtn=null, playIcon=null, pauseIcon=null;
+    var progressContainer=null, progressBar=null;
+    var timeDisplay=null;
+
+    var isDragging=false;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      video = document.getElementById('video-player');
+      commentsContainer = document.getElementById('comments-container');
+      commentsOverlay = document.getElementById('comments-overlay');
+      playPauseBtn = document.getElementById('play-pause-btn');
+      playIcon = document.getElementById('play-icon');
+      pauseIcon = document.getElementById('pause-icon');
+      progressContainer = document.getElementById('progress-container');
+      progressBar = document.getElementById('progress-bar');
+      timeDisplay = document.getElementById('time-display');
+
+      // start 기준 정렬
+      optimalComments.sort((a,b)=>a.start-b.start);
+
+      // 이벤트 바인딩
+      video.addEventListener('timeupdate', onTimeUpdate);
+      video.addEventListener('loadedmetadata', ()=>{ updateTimeDisplay(); recalcOverlayByComments(); });
+      video.addEventListener('play', updatePlayPauseButton);
+      video.addEventListener('pause', updatePlayPauseButton);
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      progressContainer.addEventListener('click', seekVideo);
+      progressContainer.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', endDrag);
+
+      window.addEventListener('resize', recalcOverlayByComments);
+
+      // 초기 상태
+      updatePlayPauseButton();
+    });
+
+    function togglePlayPause(){ if(video.paused) video.play(); else video.pause(); }
+    function updatePlayPauseButton(){
+      if(video.paused){ playIcon.style.display='block'; pauseIcon.style.display='none'; }
+      else { playIcon.style.display='none'; pauseIcon.style.display='block'; }
+    }
+
+    function updateTimeDisplay(){
+      if(!video.duration) return;
+      const cur = formatTime(video.currentTime);
+      const tot = formatTime(video.duration);
+      timeDisplay.textContent = `${cur} / ${tot}`;
+    }
+
+    function onTimeUpdate(){
+      const t = video.currentTime;
+      // 진행바
+      if(video.duration){ progressBar.style.width = ((t/video.duration)*100) + '%'; }
+      updateTimeDisplay();
+
+      // 댓글 표시/제거
+      optimalComments.forEach(function(cmt, idx){
+        var el = document.getElementById('comment-'+idx);
+        if(cmt.start <= t && t < cmt.end){
+          if(!el) addLiveComment(cmt, idx);
+        } else if(el && t >= cmt.end){
+          el.remove();
+          recalcOverlayByComments();
+        }
+      });
+    }
+
+    function startDrag(e){ isDragging=true; e.preventDefault(); updateVideoTime(e); }
+    function doDrag(e){ if(!isDragging) return; e.preventDefault(); updateVideoTime(e); }
+    function endDrag(){ isDragging=false; }
+    function seekVideo(e){ if(e.type==='click'){ setTimeout(()=>{ if(!isDragging) updateVideoTime(e); },10); } }
+    function updateVideoTime(e){
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left)/rect.width));
+      video.currentTime = pos * video.duration;
+    }
+
+    function addLiveComment(cmt, idx){
+      var div = document.createElement('div');
+      div.className = 'live-comment';
+      div.id = 'comment-' + idx;
+
+      var user = cmt.author || cmt.user || getRandomName();
+      var txt = cmt.text || '';
+      var likes = (cmt.likes !== undefined) ? cmt.likes : 0;
+      var profileColor = getRandomColor();
+      var photo = cmt.photo;
+
+      div.innerHTML = `
+        <div class="comment-content">
+          <div class="text-content">
+            <div class="user-info">
+              ${photo ? `<img class="profile-photo" src="${photo}" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />` : ''}
+              <div class="profile-icon" style="background-color:${profileColor}; display:${photo ? 'none' : 'block'};"></div>
+              <span class="username">${user}</span>
+            </div>
+            <span class="comment-text">${txt}</span>
+          </div>
+          <div class="likes">
+            <svg class="heart-icon" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span class="likes-number">${formatLikes(likes)}</span>
+          </div>
+        </div>`;
+
+      // 등장 애니메이션 기본값
+      div.style.bottom = '10px';
+      div.style.opacity = '0';
+      commentsContainer.appendChild(div);
+      setTimeout(()=>{ div.style.opacity='1'; recalcOverlayByComments(); }, 50);
+    }
+
+    // ===== A 스타일: 댓글 길이에 따라 오버레이 높이와 마스크 가변 =====
+    const OVERLAY_PADDING = 20; // 하단 여백
+    const OVERLAY_MIN = 88;     // 최소 높이
+    const OVERLAY_MAX_RATIO = 0.55; // 비디오 높이 대비 최대 비율
+    const USERINFO_EXTRA = 26;  // user-info 라인 여유치
+
+    function clampOverlayHeight(px){
+      const vc = document.querySelector('.video-container');
+      const vh = vc?.getBoundingClientRect().height || 0;
+      const maxH = vh ? Math.floor(vh * OVERLAY_MAX_RATIO) : 260;
+      return Math.max(OVERLAY_MIN, Math.min(px, maxH));
+    }
+
+    function recalcOverlayByComments(){
+      const visibles = Array.from(commentsContainer.querySelectorAll('.live-comment'));
+      if(visibles.length === 0){
+        const h = clampOverlayHeight(OVERLAY_MIN);
+        commentsOverlay.style.setProperty('--overlay-h', h + 'px');
+        commentsContainer.style.setProperty('--mask-stop', '35%');
+        return;
+      }
+
+      let maxCardH = 0;
+      visibles.forEach(el=>{ const r = el.getBoundingClientRect(); maxCardH = Math.max(maxCardH, r.height); });
+
+      const desired = clampOverlayHeight(Math.ceil(maxCardH + OVERLAY_PADDING + USERINFO_EXTRA));
+      commentsOverlay.style.setProperty('--overlay-h', desired + 'px');
+
+      let maskStop = 45;
+      if(desired > 120) maskStop = 55;
+      if(desired > 160) maskStop = 65;
+      if(desired > 200) maskStop = 72;
+      commentsContainer.style.setProperty('--mask-stop', maskStop + '%');
+    }
+  </script>
+</body>
+</html>
