@@ -232,12 +232,18 @@
     var timeDisplay = null;
 
     var isDragging = false;          // 진행바 드래그
-    var activeDanmaku = new Map();   // idx -> { element, currentX, width, y }
+    var activeDanmaku = new Map();   // idx -> { element, currentX, width, y, speed }
     var animationId = null;
     var isPaused = false;            // 비디오 정지 동기화
     var lastRafTime = 0;             // requestAnimationFrame 시간
     var lastVideoTime = 0;           // 직전 timeupdate의 비디오 시간 (시킹 대비)
-    const DANMAKU_SPEED = -100;       // px/s (음수=왼쪽)
+    
+    // 댓글별 고유 속도 계산 함수 (픽셀 단위로 네 개 중 하나)
+    function getDanmakuSpeed(commentText) {
+      const textHash = hashString(commentText || '');
+      const speedOptions = [-140, -180, -200, -240]; // px/s (음수=왼쪽)
+      return speedOptions[textHash % speedOptions.length];
+    }
 
     document.addEventListener('DOMContentLoaded', function(){
       video = document.getElementById('video-player');
@@ -343,12 +349,12 @@
       div.innerHTML = '<div class="comment-text"></div>';
       div.querySelector('.comment-text').textContent = txt; // XSS 안전
 
-      // 세로 위치: 댓글 텍스트 기반 결정적 위치 (여백 없음)
+      // 세로 위치: 댓글 텍스트 기반 결정적 위치 (하단 여백 10px)
       const containerRect = videoContainer.getBoundingClientRect();
       // 댓글 텍스트를 해시값으로 변환하여 일관된 위치 생성
       const textHash = hashString(cmt.text || '');
-      const maxHeight = containerRect.height - 25; // 전체 높이 사용
-      const randomY = textHash % maxHeight; // 여백 없음
+      const maxHeight = containerRect.height - 20; // 하단 10px 여백
+      const randomY = textHash % maxHeight; // 상단부터 시작
 
       // 먼저 붙여서 실제 너비를 잰다
       div.style.top = randomY + 'px';
@@ -360,15 +366,19 @@
       const elWidth = div.getBoundingClientRect().width;
 
       // 시작 X: 컨테이너 오른쪽 바깥
-      const startX = containerRect.width + 10; // +10 버퍼
+      const startX = containerRect.width; // +10 버퍼
       div.style.transform = `translateX(${startX}px)`;
+
+      // 댓글별 고유 속도 계산
+      const danmakuSpeed = getDanmakuSpeed(cmt.text);
 
       // 상태 저장
       activeDanmaku.set(idx, {
         element: div,
         currentX: startX,
         width: elWidth,
-        y: randomY
+        y: randomY,
+        speed: danmakuSpeed
       });
 
       // 애니메이션 루프 가동
@@ -397,10 +407,10 @@
     }
 
     function updateDanmakuPositions(deltaTime) {
-      // 모든 댓글 동일 속도 왼쪽 이동
+      // 각 댓글별 고유 속도로 왼쪽 이동
       activeDanmaku.forEach((danmaku, idx) => {
         if (!danmaku || !danmaku.element) return;
-        danmaku.currentX += DANMAKU_SPEED * deltaTime;
+        danmaku.currentX += danmaku.speed * deltaTime;
 
         // 완전 퇴장: 요소의 오른쪽 끝이 화면 왼쪽 밖으로 나가면 제거
         if (danmaku.currentX + danmaku.width < 0) {
