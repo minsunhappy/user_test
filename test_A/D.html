@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>REMBLE - "TED TALK" (OFFICIAL MUSIC VIDEO)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* 기본 스타일 */
+    :root {
+      --bg: #ffffff;
+      --video-bg: #000;
+      --accent: #ff0000;
+      --text: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #fff; /* 흰색 배경 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .video-title {
+      width: 800px;
+      margin-top: 40px;
+      margin-bottom: 5px;
+      text-align: left;
+      font-size: 20px;
+      font-weight: 600;
+      color: #000;
+      padding: 0;
+      line-height: 1.4;
+    }
+
+    .video-container {
+      width: 800px;
+      margin-top: 20px;
+      position: relative;
+      background-color: #000;
+      overflow: hidden;
+      border-radius: 20px; /* 유튜브 느낌의 둥근 모서리 */
+      transition: all 0.3s ease;
+    }
+
+    video {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: 12px; /* 비디오 둥근 모서리 */
+    }
+
+    /* 기본 비디오 컨트롤 완전히 숨기기 */
+    video::-webkit-media-controls-panel { display: none !important; }
+    video::-webkit-media-controls-play-button { display: none !important; }
+    video::-webkit-media-controls-start-playback-button { display: none !important; }
+    video::-moz-media-controls { display: none !important; }
+    video::--ms-media-controls { display: none !important; }
+
+    /* 커스텀 비디오 컨트롤 */
+    .custom-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.8);
+      padding: 4px 15px 4px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 4;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .video-container:hover .custom-controls { opacity: 1; }
+
+    .progress-container {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      margin-bottom: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #ff0000;
+      border-radius: 3px;
+      width: 0%;
+      position: relative;
+      transition: width 0.1s ease;
+    }
+
+    .progress-handle {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: #ff0000;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .progress-container:hover .progress-handle { opacity: 1; }
+
+    .controls-bottom {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 3px;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-button:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .control-button svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    .time-display {
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* 단무쿠 댓글 */
+    .danmaku-comment {
+      position: absolute;
+      color: white;
+      font-size: 18px;
+      font-weight: normal;
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000;
+    }
+
+    .comment-text {
+      font-size: 18px;
+      color: white;
+      font-weight: normal;
+    }
+
+
+  </style>
+</head>
+  <body>
+    <!-- 제목을 영상 위에 배치 -->
+    <div class="video-title">REMBLE - "TED TALK" (OFFICIAL MUSIC VIDEO)</div>
+    <div class="video-container" id="video-container">
+    <video id="video-player" preload="metadata">
+      <!-- 템플릿 엔진이 주입하거나 아래 src로 대체하세요 -->
+      <source src="./biG3iUCrHaQ.mp4" type="video/mp4" />
+      브라우저가 video 태그를 지원하지 않습니다.
+    </video>
+
+    <!-- 커스텀 비디오 컨트롤 -->
+    <div class="custom-controls">
+      <div class="progress-container" id="progress-container" aria-label="progress">
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-handle"></div>
+        </div>
+      </div>
+      <div class="controls-bottom">
+        <button class="control-button" id="play-pause-btn" aria-label="play/pause">
+          <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <div class="time-display" id="time-display">0:00 / 0:00</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 유틸 =====
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+    function formatTime(sec){ const m = Math.floor(sec/60); const s = Math.floor(sec%60).toString().padStart(2,'0'); return m + ':' + s; }
+    
+    // 문자열을 해시값으로 변환 (일관된 랜덤 위치 생성용)
+    function hashString(str) {
+      let hash = 0;
+      if (str.length === 0) return hash;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 32bit 정수로 변환
+      }
+      return Math.abs(hash);
+    }
+
+    // 서버에서 주입되는 단무쿠 댓글 리스트 예: [{ start: 1.2, text: "하이" }, ...]
+    // 템플릿이 없다면 아래 fallback 사용
+    var danmakuComments = (typeof [{"start": 0, "text": "Talk", "correlation": 0.5704063758526904}, {"start": 0, "text": "Listen to what he saying it speak the truth facts blm", "correlation": 0.4136290090625056}, {"start": 0, "text": "This man want you to understand every word", "correlation": 0.41331486334795353}, {"start": 2, "text": "A TED TALK WITH A MURDEROUS RHYME SCHEME! 🚀", "correlation": 0.8257902589072373}, {"start": 2, "text": "at the end he like thanks for coming to my ted talk", "correlation": 0.7004042040946438}, {"start": 2, "text": "TED TALK NIGGA 🔥🔥🔥🔥✈️", "correlation": 0.6979100595088252}, {"start": 2, "text": "i love this ted talk", "correlation": 0.6504867935054078}, {"start": 2, "text": "TED talk with murderous schemes sounds like Bill Gates", "correlation": 0.6442024426424157}, {"start": 2, "text": "cool that this ted talk is interactive", "correlation": 0.6364242987306059}, {"start": 2, "text": "#tedtalk", "correlation": 0.6277888542069819}, {"start": 2, "text": "“A Ted talk with a murderous rhyme scheme” y’all sleepin on this verse 🔥", "correlation": 0.5991717238725406}, {"start": 2, "text": "Y’all sleeping on the subtle melodies in that first part. “A Ted talk with murderous rhyme scheme” 🔥", "correlation": 0.5772365131426641}, {"start": 2, "text": "\"A Ted talk with a murderous rhyme scheme\" pretty much applies to all his songs so far lol", "correlation": 0.5579909675913691}, {"start": 2, "text": "he’s preaching and spitting 🙇🏽‍♂️🤷🏽‍♂️💯", "correlation": 0.5248517058020363}, {"start": 2, "text": "Amazing song but a missed opportunity you could’ve edited yourself in the stage and the screens have photos of things you say and had a fr Ted talk", "correlation": 0.5235639343719474}, {"start": 2, "text": "man this really spoke to me just the way he delivers his words reaches me with the effect of the bible almost ands its funny cause he is dressed like jesus man remble some else- curly out", "correlation": 0.49926922973308663}, {"start": 2, "text": "The speech at the end so real", "correlation": 0.49618738490255554}, {"start": 2, "text": "Imagine pulling up ted talks in class scrolling then clicking this then have an epiphany then go throug all stages of enlightenment", "correlation": 0.4907300046675459}, {"start": 2, "text": "This dude word play is bananas. Video started out as one of those meditation get away trips, Lol.", "correlation": 0.4758250695142849}, {"start": 2, "text": "He said- “ he had a problem I put my Glock away and spit on him” 😭😤😫🥰🥰🥰🥰🥰😌😇😅🤧😬 somebody check if u allowed to do that 😧😂😂😂😂😂😂😂😂😂😂😂😂😂😂 that was amazing  …… encore encore", "correlation": 0.4710054222794168}, {"start": 2, "text": "I fuckin love how this nigga just talkin in his music dawg. Im lookin for a message in music.", "correlation": 0.4600630277390516}, {"start": 2, "text": "Remble doesn't have Ted Talks. He has Theodore Discussions.", "correlation": 0.4548896140733989}, {"start": 2, "text": "This man the polar opposite of a mumble rapper", "correlation": 0.4408510244352717}, {"start": 5, "text": "Who is the white dude", "correlation": 0.5209204394080889}, {"start": 5, "text": "Spitting fire", "correlation": 0.4552128692072416}, {"start": 5, "text": "Lol the white dude is hilarious", "correlation": 0.4459172076617253}, {"start": 5, "text": "where the white guy come from?🤣", "correlation": 0.4384781932217016}, {"start": 5, "text": "This dude is like a Key n Peele skit.", "correlation": 0.41624913036267214}, {"start": 5, "text": "why he always sweating on his videos he on drugs or something", "correlation": 0.4131124677366266}, {"start": 10, "text": "Don’t Cry No More Momma", "correlation": 0.6261718423475586}, {"start": 10, "text": "“Don’t cry no more mama”", "correlation": 0.5861247333044004}, {"start": 10, "text": "Don’t cry no more mama look it’s a 10 piece", "correlation": 0.404479015015106}, {"start": 10, "text": "white dude got me crying", "correlation": 0.4035360147694565}, {"start": 11, "text": "Don’t cry no more mama here look it’s a 10 piece 😭🔥 0:11", "correlation": 0.4297720079464994}, {"start": 12, "text": "\"I just want flawless diamonds caucasian like white people\" DAWG THIS NIGGA IS FLOWING", "correlation": 0.51433068684278}, {"start": 13, "text": "I just want flawless diamonds, Caucasian, like white people!", "correlation": 0.5890193347925763}, {"start": 13, "text": "\"I just want flawless diamonds Caucasian like white people\" is a bar", "correlation": 0.5073069744281997}, {"start": 13, "text": "He's saying he wants white diamonds. They come in different colors.", "correlation": 0.4193871911849923}, {"start": 13, "text": "I wish I had diamonds but I’m broke", "correlation": 0.40163173373348804}, {"start": 18, "text": "couldve swear he was floatin", "correlation": 0.4474483927793396}, {"start": 20, "text": "2021 is the year i see a million", "correlation": 0.6995986432669653}, {"start": 20, "text": "2021 is mos def the year you see a million", "correlation": 0.6530334862233188}, {"start": 20, "text": "Jesus walkin on water 🔥", "correlation": 0.5811181092157166}, {"start": 20, "text": "He's right 2021 is the year he hits a million.", "correlation": 0.5254374536430515}, {"start": 20, "text": "2thousand 21 is the year that i see a million 😭🤣🦍", "correlation": 0.522220720259673}, {"start": 20, "text": "\"2021 is the year that i see a million\"\r big bro you got 18 of those, good job istg✨🤍", "correlation": 0.5098090347344543}, {"start": 20, "text": "2022 is the year", "correlation": 0.48328580367597185}, {"start": 20, "text": "Like he said 2021is the  year we reach a million, he just did it!💯✔ THE BEGINNING ..OF A LEGEND!", "correlation": 0.4794623797392101}, {"start": 20, "text": "2021", "correlation": 0.4370317135027427}, {"start": 20, "text": "One in a million best out in 2021!!!!!!!!!!", "correlation": 0.41406773297827043}, {"start": 21, "text": "I grew up on this beach still live here", "correlation": 0.461395158504243}, {"start": 21, "text": "It's 2025", "correlation": 0.4127035959915712}, {"start": 23, "text": "I might just have some kids to play with my brothers children", "correlation": 0.6865222226625797}, {"start": 23, "text": "might just have some kids to play with my brothas children", "correlation": 0.6211286575177378}, {"start": 23, "text": "Beach Preachin", "correlation": 0.5756585403997014}, {"start": 23, "text": "“I might just have some kids,to play with my brother’s children” that’s grown man shit!! 🔥🔥", "correlation": 0.4249989835941967}, {"start": 24, "text": "White boy was just out surfing ended up ina music video 🤣😂", "correlation": 0.5403728678048049}, {"start": 24, "text": "I might just have some babies to play with my brothers children lol sick asf", "correlation": 0.5257418061989114}, {"start": 24, "text": "Which one of his friends let him hop in the studio and sing 🤣", "correlation": 0.45620100722229456}, {"start": 24, "text": "This might be fire to other people but I don’t understand the vision and image he tryna point out ion really like it but that’s just me", "correlation": 0.45351042203153885}, {"start": 24, "text": "My boy made a music video at del perro pier", "correlation": 0.44522022055623633}, {"start": 27, "text": "I was with you until you Said what's independent????...nigga everything....", "correlation": 0.5276725637864116}, {"start": 27, "text": "I thought this was a Nigerian music video 😂😂", "correlation": 0.437395401178848}, {"start": 28, "text": "One funny music video", "correlation": 0.5021799244271712}, {"start": 28, "text": "Song and video delivered perfectly", "correlation": 0.47602880999861347}, {"start": 28, "text": "why do i keep replaying cause its fire when the beat drops it sound familiar", "correlation": 0.4411440024604084}, {"start": 28, "text": "This music video got it☠️", "correlation": 0.43891721104623516}, {"start": 28, "text": "The king of 2 minute songs.", "correlation": 0.43526064899123834}, {"start": 28, "text": "Song changed the way i view things", "correlation": 0.40386341642459095}, {"start": 28, "text": "This the new wave. Super original !", "correlation": 0.4018721921274415}, {"start": 29, "text": "Remember when I wasn’t anything but a Co defendant 😞", "correlation": 0.64895232321668}, {"start": 29, "text": "Damn y'all niggas ain't hot wearing sweaters  hoodies , and trench coats at the beach?", "correlation": 0.5612476236517642}, {"start": 29, "text": "So we just gon act like that one yute wasn’t at the beach in a fat ass jacket a hoodie and a skully", "correlation": 0.5484296526011331}, {"start": 29, "text": "remember when i wasnt anything but a co-defindent", "correlation": 0.43807043960984343}, {"start": 30, "text": "“Remember when I wasn’t anything but a co defendant” felt that 😔", "correlation": 0.5735007074426445}, {"start": 34, "text": "Ever since that draco   Cosigned-it flows with rivers", "correlation": 0.562222444165756}, {"start": 34, "text": "\"ever since that drakeo co-sign he flows with rivers\"", "correlation": 0.4953275403070115}, {"start": 34, "text": "Ever since that drakeo co sign he FLOWS with rivers 👨🏻‍🦳👵🏻 LMAOOOOO", "correlation": 0.4460820793214655}, {"start": 34, "text": "He switched the flow so many times🤌🏽💪🏽", "correlation": 0.4338907489500354}, {"start": 36, "text": "Michael Phelps in unison with controlled swimmers", "correlation": 0.7978672853475924}, {"start": 36, "text": "“Micheal Phelps in unison with controlled swimmers” 🏊‍♂️🏊‍♂️🏊‍♂️", "correlation": 0.7200108833291857}, {"start": 36, "text": "Michael Phelps in unison", "correlation": 0.6601032051124441}, {"start": 36, "text": "Nobody:     Remble: Micheal phelps in Unison with controlled swimmers.", "correlation": 0.6306552295360497}, {"start": 36, "text": "Michael Phelps In unison with controlled swimmers… I seen ppul robbed at parties, the coldest strippers…  Rearranged a Fitted, A Bakery of Biscuits, Ks n Pistols with extensions… 😂🗞🔥", "correlation": 0.5529076693786151}, {"start": 36, "text": "that random white guy in a wet suit made me chuckle", "correlation": 0.5496350900313849}, {"start": 36, "text": "Ever since that drakeo co-sign he flows with rivers , Michael Phelps in unison with controlled swimmers 😳⁉️ WHAT", "correlation": 0.5382864421232763}, {"start": 36, "text": "If watch them surfers n the water those are the same ones . It's just all luv . If u was walking yo dogg you probably would've been in it", "correlation": 0.5041794858387283}, {"start": 36, "text": "The fact he got a random surfer in the vid is legendary", "correlation": 0.4858745604323836}, {"start": 36, "text": "That random surfer guy 😂", "correlation": 0.48357351504372315}, {"start": 36, "text": "The random white surfer guy is so funny for some reason", "correlation": 0.46921307117579486}, {"start": 36, "text": "It was a dope metaphor he mentioned a feature he did then calls himself michael Phelps and drakeo just swam with him", "correlation": 0.41517588114642734}, {"start": 42, "text": "I seen people at parties Rob the coldest Strippers 🔥🔥", "correlation": 0.5076431363814411}, {"start": 42, "text": "I fw this. Bro needs to spend more time in front of the camera tho and get more comfortable", "correlation": 0.46882617440613117}, {"start": 42, "text": "I seen people robbed at parties the coldest strippers", "correlation": 0.44801834253761436}, {"start": 42, "text": "I seen niggas get robbed at parties, the coldest strippers oooooo😪🫠", "correlation": 0.4322733149139439}, {"start": 43, "text": "Hold up wait a minute Y’all thought I was finished!?? 🔥🔥🔥🔥🔥🔥👿", "correlation": 0.5387754484450451}, {"start": 43, "text": "Hold on wait a minute yall thought he was finished", "correlation": 0.48643597140517214}, {"start": 43, "text": "Y’all thot I was finish 🚒🧃🔥🔥🐐", "correlation": 0.452629314429716}, {"start": 43, "text": "Bro you get it the mask came out when he was  starting to rap", "correlation": 0.435407249741714}, {"start": 43, "text": "What In The World He Has On???", "correlation": 0.4310659332494532}, {"start": 43, "text": "“Hold on wait a minute y’all thought I finished?”", "correlation": 0.4103225658481789}, {"start": 45, "text": "The 2 surfer dudes in the video cracking me up lmao", "correlation": 0.6056622482142077}, {"start": 45, "text": "TF up with the white dude in the wet suit", "correlation": 0.5633048544253444}, {"start": 45, "text": "Y’all rlly put the surfer in the wetsuit in the vid🤦🏻‍♂️🔥🔥 stupid hard", "correlation": 0.5586093322882196}, {"start": 45, "text": "why grey hoodie man finger his booty hole at the end after shaking remble hand?", "correlation": 0.5286361237991335}, {"start": 45, "text": "Seen this multiple times just barely noticed the surfer homie😂 “AND THEN YOU GET PITTED, SO PITTED 🏄🏼‍♂️” headass 😂", "correlation": 0.5245867661146916}, {"start": 45, "text": "At the very end when remble shaking there hands dude sticks his figure in his ass😂", "correlation": 0.5020909976549357}, {"start": 45, "text": "Where the fuck did that white guy come from", "correlation": 0.4947041519894987}, {"start": 45, "text": "That nigga in the gray hoodie scratched his ass", "correlation": 0.4780286342886237}, {"start": 45, "text": "He hit the all black at the end", "correlation": 0.4709103725976112}, {"start": 45, "text": "Men In Black his memories🔥🔥💯💪🏾", "correlation": 0.4609416744482464}, {"start": 45, "text": "vernacular boxing", "correlation": 0.4604404342952826}, {"start": 45, "text": "This shit slap", "correlation": 0.460140989440407}, {"start": 45, "text": "\"Killen any opp and anyone hes with\"", "correlation": 0.4505518886521184}, {"start": 45, "text": "Why was bro cuppin his ass like that at the end lmao", "correlation": 0.43340292172569644}, {"start": 45, "text": "Remble you need to tuck your elbows when you put your fists up, your leaving you're body open lol", "correlation": 0.42123536809723167}, {"start": 45, "text": "He takes his time but when he catches the beat it's with murderous intent", "correlation": 0.41820795832906393}, {"start": 45, "text": "Have you noticed the way he fights", "correlation": 0.4137078575532947}, {"start": 45, "text": "He doesn’t hit people with guitars, he simply picks up a piece of wood that has now gained the name “Guitar”. He swings the piece of wood at a human being at a rapid pace with the malicious intent to harm.", "correlation": 0.40422873995841313}, {"start": 45, "text": "Dude hit him with that mind transfer jutsu.", "correlation": 0.40154310195017257}, {"start": 47, "text": "The surfer just thrown in the video", "correlation": 0.5980795978851519}, {"start": 47, "text": "So where did the surfer in the surf suit come from?? I love dis shit 😂", "correlation": 0.5736446104588024}, {"start": 47, "text": "The white dude in the wetsuit... Was he just a random dude surfing that just walked up and was like \" It's Remble\" and hit tossed in that scene🤔", "correlation": 0.523439806909195}, {"start": 47, "text": "This man's flow never fails to amaze me", "correlation": 0.4988435892482559}, {"start": 47, "text": "the fucking random surfer 😂😂🤣🤣🤣", "correlation": 0.49194057716499767}, {"start": 47, "text": "Dude was randomly surfing and ended up in the video🤣that's hella cool", "correlation": 0.48913003706128827}, {"start": 47, "text": "Surfer bruh lmao", "correlation": 0.48011802407214743}, {"start": 47, "text": "\"rearrange the fitted\" 🧢 🥶", "correlation": 0.4662563747702075}, {"start": 47, "text": "This man is built different.", "correlation": 0.4579028845458313}, {"start": 47, "text": "The surfer foo 🤣", "correlation": 0.44424278841504616}, {"start": 47, "text": "Wtf this man is hard af! His articulation is so different!", "correlation": 0.44413699962535086}, {"start": 47, "text": "The random ass surfer 🤣🤣 yessir", "correlation": 0.4300145964132315}, {"start": 47, "text": "Remble next up.", "correlation": 0.4279935641230998}, {"start": 47, "text": "like he said before. ITS REMBLE 🔥🔥", "correlation": 0.4268621486402644}, {"start": 47, "text": "Scuba diver came out of nowhere 🤣", "correlation": 0.42609143963191815}, {"start": 47, "text": "REMEMBLE UP NEXT", "correlation": 0.4027001087548312}, {"start": 47, "text": "He really switched his flow back to back!🔥", "correlation": 0.4008283244483287}, {"start": 48, "text": "The dance 🔥🔥🔥🔥🔥🔥", "correlation": 0.6110940039979795}, {"start": 48, "text": "That dance move hard 🕺🏽🕺🏽🕺🏽", "correlation": 0.5511926865516072}, {"start": 48, "text": "His little dance goes hard 🤣🤣", "correlation": 0.5404378800285893}, {"start": 48, "text": "A BAKERY OF BISCUITS 🔊 🔊 love that part lol", "correlation": 0.5402537767285879}, {"start": 48, "text": "A bakery of biscuits, K's and pistols wit extensions, We're not exchanging mittens🔥🔥🔥🔥", "correlation": 0.5250850137173151}, {"start": 48, "text": "filmed in huntington beach baby", "correlation": 0.4935352089932871}, {"start": 48, "text": "You needa make a dance", "correlation": 0.4763997083640551}, {"start": 48, "text": "PERFECT SCENE FOR THIS SONG", "correlation": 0.47392408266101094}, {"start": 48, "text": "Remble the next CRIP OUTTA LA😈🥶 and he got his homies to do the dance this video like he said in the interview😂🤣", "correlation": 0.44529110301259406}, {"start": 48, "text": "Yooooo this is in HUNTINGTON BEACH ! 😈😤💯", "correlation": 0.429196307330707}, {"start": 48, "text": "los santos beach bruh", "correlation": 0.4266897577346156}, {"start": 52, "text": "0:52 “you’re about to witness Floyd mayweather with good penmanship” what", "correlation": 0.8035414395014477}, {"start": 52, "text": "This is him wearing a dress he’s in now he’s just gonna blow up now", "correlation": 0.541310522180639}, {"start": 52, "text": "\"You're about to experience floyd Mayweather with good penmanship\" on foe he goin", "correlation": 0.5074612787623539}, {"start": 52, "text": "\"your about to witness Floyd Mayweather wit good penmanship\"😂😂", "correlation": 0.49291680819691763}, {"start": 52, "text": "Mayweather with good penmanship 🔥🔥", "correlation": 0.4660064851978117}, {"start": 52, "text": "“Floyd Mayweather with great penmanship” 😂😂😂💯🔥🔥🔥", "correlation": 0.4607614202212937}, {"start": 52, "text": "Floyd Mayweather with good penmanship   bro this hit hard", "correlation": 0.45653565713018596}, {"start": 52, "text": "Floyd Mayweather with good penmanship is diabolical", "correlation": 0.4511544505096427}, {"start": 53, "text": "ii bet those surfers were just walking by and they put them in the vid 😂😂", "correlation": 0.6881123465168744}, {"start": 53, "text": "I just realized there were surfers", "correlation": 0.676043744453299}, {"start": 53, "text": "broo imagine seeing this vid being filmed just chillin at the beach LAMO!!!!!", "correlation": 0.6421815380165408}, {"start": 53, "text": "Those surfers had no idea the legend they were in a video with", "correlation": 0.6153427566707389}, {"start": 53, "text": "i love how there's a random surfer in the video hahaha", "correlation": 0.6106912561935454}, {"start": 53, "text": "anyone peep the random dude in the wetsuit that joined in? 100% they just found him there at the beach n vibed wit him🤣🤣", "correlation": 0.603904018497321}, {"start": 53, "text": "You already know those guys got done with their surf and had to pull up in the video", "correlation": 0.6024278230091497}, {"start": 53, "text": "This was shot on the GTA 5 beach", "correlation": 0.5895811574033571}, {"start": 53, "text": "shout out the random surfer they let be in the video lol", "correlation": 0.5888399445296547}, {"start": 53, "text": "So no one mentioning the Whyte guy surfer just was invited into the video he was surfing in the background at first🤣", "correlation": 0.5738267526347475}, {"start": 53, "text": "The surfer dudes lmao", "correlation": 0.570539487784842}, {"start": 53, "text": "Those random white boy surfers cracked me tf up for some reason 😅💀", "correlation": 0.5696395428885381}, {"start": 53, "text": "Why is nobody gon talk abt the white surfer dude in the video", "correlation": 0.5668952068243609}, {"start": 53, "text": "Gotta love the surfer posted up wit em", "correlation": 0.5497297398605994}, {"start": 53, "text": "the two  surfers tho", "correlation": 0.5352087317537234}, {"start": 53, "text": "The 2 random surfer dudes 💀", "correlation": 0.5285061128069553}, {"start": 53, "text": "Bro the surfer look like an npc spawning in a place they shouldn’t be", "correlation": 0.525680295938213}, {"start": 53, "text": "The random white surfer in the music video vibing is taking me tf out! lmfao", "correlation": 0.5231638403296355}, {"start": 53, "text": "That random ass surfer 😭🤣", "correlation": 0.5019913096933464}, {"start": 53, "text": "Huntington Beach Vibes with old heads hopping into the water behind you", "correlation": 0.49743036303309157}, {"start": 56, "text": "Fades at the beach 😂", "correlation": 0.5275700576432186}, {"start": 57, "text": "Bro is doing a poem", "correlation": 0.4636614451301142}, {"start": 58, "text": "“If I get Grammy I’m Kanye west I’ll take a piss on it”…..", "correlation": 0.6725779732674064}, {"start": 58, "text": "If I get a Grammy I piss on it like kanya west", "correlation": 0.6114603853605068}, {"start": 58, "text": "Thats not what he said lmaooo he said if i win a grammy im kanye west i piss in it", "correlation": 0.5720336539802074}, {"start": 58, "text": "@fatboynelly5723  you're both braindead, he said \"if I win a Grammy I'm Kanye West I'll take a piss on it\"", "correlation": 0.5656351568419897}, {"start": 58, "text": "Grabbed some random surfer like, Yo dance real quick lmao", "correlation": 0.5239727262195949}, {"start": 58, "text": "“I’m Kanye west I’ll piss on you” bro no way he listens to piss on your grave", "correlation": 0.4839643287098998}, {"start": 58, "text": "Give dis man a grammy", "correlation": 0.4246075803541879}, {"start": 58, "text": "@bandogetrich5  he said like Kanye take a piss on him", "correlation": 0.4007610797948364}, {"start": 60, "text": "I had a problem got a chop and put a stick on it", "correlation": 0.6539590116941514}, {"start": 60, "text": "“I had a problem then bought a chop and put a stick on it” 🔥🔥🥇", "correlation": 0.5287577359977046}, {"start": 63, "text": "lol some random white boy surfer walked up", "correlation": 0.632398370662976}, {"start": 63, "text": "Hahaha just imagine seeing this at the beach", "correlation": 0.6119842069392978}, {"start": 63, "text": "Yall notice that he's on the gta beach", "correlation": 0.544672486220333}, {"start": 63, "text": "Nigga even the surfer was turnt 🔥😭", "correlation": 0.5332978147355506}, {"start": 63, "text": "White dude was scared asl", "correlation": 0.5185575603381863}, {"start": 63, "text": "Dude really started a cult on that beach haha shits fire", "correlation": 0.49437885049619446}, {"start": 63, "text": "What he say... He had a problem... I put my Glock away an SPIT ON HIM..", "correlation": 0.49121611709807755}, {"start": 63, "text": "He had a problem I put my glock away and spit on him 💀 nigga need to calm down", "correlation": 0.4892216586291805}, {"start": 63, "text": "You knew this shit was gone b fire wen u seen tht random surfer pull up wit them🔥🧢👕👖♿", "correlation": 0.48363394244365415}, {"start": 63, "text": "Anyone see the tall guy scratch his ass or just me🤣🤣", "correlation": 0.46917547430979356}, {"start": 63, "text": "I put my Glock away then spit on him MY GOD", "correlation": 0.46702957216079316}, {"start": 63, "text": "“he had a problem, i put my glock away and spit on him” 🤣🤣", "correlation": 0.4448737114630127}, {"start": 63, "text": "He had uh problem put mah glock away and spit on em...G.O.D", "correlation": 0.41848496005872937}, {"start": 63, "text": "“Most of the time, I was in school jus to walk in line. See other guys hop in the pool jus to hide from light”", "correlation": 0.41693053763049837}, {"start": 63, "text": "“He had a problem I put my glock away and spit on him” so reckless🤦🏾‍♂️‼️‼️‼️🥶🥶", "correlation": 0.4100050357827165}, {"start": 63, "text": "“he a problem i put my glock away n spit on him” bro😭🔥", "correlation": 0.4023086675159043}, {"start": 65, "text": "Killing is common it's just so sad his kids depend on him.", "correlation": 0.7089277351962541}, {"start": 65, "text": "“Killing is common it’s so sad his kids depend on him.” Sheeeesh", "correlation": 0.5663233663844387}, {"start": 65, "text": "\"Killing is so common its sad that his kids depend on him\" 🤓🔥 🔥", "correlation": 0.4969159296455576}, {"start": 65, "text": "I like he just spat at the perpetrator instead of killing, because his kids depend on him.", "correlation": 0.4664993596211185}, {"start": 65, "text": "I don't wanna be a part of this world after watching this", "correlation": 0.40639792983575196}, {"start": 66, "text": "The surfurs that are dancing with them 🤣🤣🤣", "correlation": 0.7071067811865476}, {"start": 66, "text": "The surfer on the right vibing and got the rhythm and the one on the left look so confused like he don’t kno why he there😭😭", "correlation": 0.6545708135184745}, {"start": 66, "text": "Lmao nobody gonna notice the surfer boys hitting that fighting dance", "correlation": 0.6337328148285412}, {"start": 66, "text": "Same ppl in every music video XD the gang always with this guy 👌", "correlation": 0.5573552682900774}, {"start": 66, "text": "The beat is so hard", "correlation": 0.4415746332150986}, {"start": 67, "text": "no one talking about random surfers at 1:07", "correlation": 0.795126624441661}, {"start": 71, "text": "Beat goes hard", "correlation": 0.4081850074331614}, {"start": 73, "text": "That random white boy who just joined the video", "correlation": 0.4631787745046726}, {"start": 74, "text": "Stripped him for everything then we men in blacked his memories 😳", "correlation": 0.6285147355478212}, {"start": 74, "text": "Stripped him of everything, then we men in black'd his memories*", "correlation": 0.608897889036547}, {"start": 74, "text": "Stripped em for everything and then we men in blacked his memories 😎📸", "correlation": 0.5744382273098962}, {"start": 74, "text": "“Stripped em for everything then we Men In Blacked his memories” 🔥🔥🔥", "correlation": 0.5247619536099001}, {"start": 74, "text": "Stripped him of everything then we men and black his memories stank face on stuck 🔥🔥🔥🔥🔥", "correlation": 0.5150674173990473}, {"start": 74, "text": "1:14 Then we men in black just memories. That was fire", "correlation": 0.4805098027288104}, {"start": 74, "text": "Strip him for everything then we MEN IN BLACC HIS MEMORIES OH MY GOD", "correlation": 0.4785686134797744}, {"start": 74, "text": "\"stripped him of everything, and then we're Men in Black...\" That was HARD.", "correlation": 0.467617248063398}, {"start": 74, "text": "Striped him for everything, then mib his memories", "correlation": 0.43747330600723566}, {"start": 75, "text": "1:15 \"some surfers\" love it 😂", "correlation": 0.5205398822233062}, {"start": 76, "text": "third guy was trying not to laugh when shaking remble hands", "correlation": 0.5921482428198479}, {"start": 76, "text": "The way we just did him his friends wondering what he did to me 🤣🤣", "correlation": 0.590523749903618}, {"start": 76, "text": "Killers Anonymous meeting at the beach?", "correlation": 0.5750309733431861}, {"start": 76, "text": "Friends:  and I start to wonder what he did he do to make them niggas that mad", "correlation": 0.518390793557697}, {"start": 76, "text": "\"Men In Blacked his memories\"(Remble).", "correlation": 0.50411392514126}, {"start": 76, "text": "The white boys stiff", "correlation": 0.47340363156662546}, {"start": 76, "text": "The random white guys joining in is wholesome lol", "correlation": 0.46662897968448697}, {"start": 76, "text": "DID NOBODY NOTICE THE RANDOM WHITE DUDE", "correlation": 0.45590463998418956}, {"start": 76, "text": "We men in black we memories fuckkkkkkkking guyyyyy", "correlation": 0.4477143926328598}, {"start": 76, "text": "\"We men in black as memories\" wow how does he come up with these so creative and so specific words out of nowhere", "correlation": 0.4357086822862208}, {"start": 76, "text": "them 2 white dudes fsho random lol", "correlation": 0.42706911147267407}, {"start": 76, "text": "That one guy at the end when they were shaking hands was dying lmaooo", "correlation": 0.4163032373399871}, {"start": 76, "text": "Bro I agree, if he changes it to white peeps I think it would flow way better", "correlation": 0.4131178629157651}, {"start": 76, "text": "Please change the lyric from white people to white peeps I feel like it would rhyme way better", "correlation": 0.41099695222304033}, {"start": 76, "text": "This mans an artist", "correlation": 0.4087597515023923}, {"start": 76, "text": "the white dudes was funny lov yall", "correlation": 0.4035423444318616}, {"start": 76, "text": "Did him so dirty his friends wonder what he did to me. 😅", "correlation": 0.40327278353284435}, {"start": 76, "text": "1:16 the white dude tho", "correlation": 0.4007316006848901}, {"start": 77, "text": "1:17 you all are African Americans and… mark but we rockin with mark cause marks rockin with us 😂😂😂", "correlation": 0.6310439546005249}, {"start": 77, "text": "Yoooo look at how that white boy just cameo utta nowhere at 1:17", "correlation": 0.4952717367587033}, {"start": 77, "text": "1:17 some random ppl just came in the video lol", "correlation": 0.45602846075746883}, {"start": 78, "text": "Hol up did yall se da white dudes in da swim suits", "correlation": 0.5159825695287489}, {"start": 78, "text": "“We really have everything from the cash to the artillery”🔥🔥🔥", "correlation": 0.46902869226055477}, {"start": 78, "text": "loc got surfers 🏄🏽 in vid🤌🏽💯💯💯💙💙💙💙💯💯💯🔥🔥🔥🔥", "correlation": 0.45396431551689104}, {"start": 78, "text": "Don't try to be me  I'm not trying to be you  We are all one from a few  Let's put the guns down  And find away around  Drugs  There are no need for slugs  Frogs are always jumpy  Snakes know how to swim  Sharks can walk  Tell me why I just talk  Art is in the start  Please don't use my lines", "correlation": 0.44322405357651257}, {"start": 78, "text": "Niggas really jus talking", "correlation": 0.43612906112063415}, {"start": 78, "text": "“White people” that’s facts🔥🔥🧍🏻‍♂️", "correlation": 0.43414129589850114}, {"start": 78, "text": "Who them white boys🤣", "correlation": 0.42203005473218186}, {"start": 78, "text": "The white bois made the video😂😂😂 wasn’t expecting them that’s all", "correlation": 0.41008888580425606}, {"start": 78, "text": "LMAOOOOO THE WHITE DUDES", "correlation": 0.4074863679797381}, {"start": 79, "text": "my nigga snappin on the beach", "correlation": 0.5970391607808092}, {"start": 79, "text": "This is so weird what is he wearing", "correlation": 0.43793167912671654}, {"start": 81, "text": "What's the name of that robe he's wearing ?", "correlation": 0.4483934373122195}, {"start": 81, "text": "My opps turns to fans it's like they don't even plan on killing me", "correlation": 0.4451007617552358}, {"start": 81, "text": "\"My opps turned to fans it's like they  don't even plan on killin me\"", "correlation": 0.4018047859867939}, {"start": 100, "text": "Yo i bet no one 😂😂peeped the 3rd guy that shook rembles hand grabbing his ass after he walks away", "correlation": 0.5013381183367203}, {"start": 100, "text": "yo the song was some mad fire but why did the third guy at 1:40 touch his ass like that as he walked away... da FUCK", "correlation": 0.49665407173234805}, {"start": 100, "text": "tall kid at 1:40 need to wipe better ...i cant!!!", "correlation": 0.43720130060176565}, {"start": 100, "text": "ALWAYS KNOW YOUR WORTH 🥇", "correlation": 0.40124917745539346}, {"start": 109, "text": "Shaking their hands as they thank him for the eulogy 🙏🙏🙏", "correlation": 0.43593128400791364}, {"start": 110, "text": "Thank you", "correlation": 0.48409871647659003}, {"start": 110, "text": "Bluntington beach", "correlation": 0.4176282444782107}, {"start": 110, "text": "A Demon in Angel's Clothing.", "correlation": 0.4010721564535706}, {"start": 111, "text": "Who are the white boys that join in the video that's shit had me dead like where did they come from😂?", "correlation": 0.49107608142249093}, {"start": 111, "text": "🤛🏿💪🏾🤛🏿💪🏾🤛🏿💪🏾🎶🔥💯 Remble dance emoji", "correlation": 0.4438557005989632}, {"start": 120, "text": "Where this beat from?", "correlation": 0.47329332185098943}, {"start": 120, "text": "Damn thought this was another gta music video", "correlation": 0.4459672811159941}] !== 'undefined' ? [{"start": 0, "text": "Talk", "correlation": 0.5704063758526904}, {"start": 0, "text": "Listen to what he saying it speak the truth facts blm", "correlation": 0.4136290090625056}, {"start": 0, "text": "This man want you to understand every word", "correlation": 0.41331486334795353}, {"start": 2, "text": "A TED TALK WITH A MURDEROUS RHYME SCHEME! 🚀", "correlation": 0.8257902589072373}, {"start": 2, "text": "at the end he like thanks for coming to my ted talk", "correlation": 0.7004042040946438}, {"start": 2, "text": "TED TALK NIGGA 🔥🔥🔥🔥✈️", "correlation": 0.6979100595088252}, {"start": 2, "text": "i love this ted talk", "correlation": 0.6504867935054078}, {"start": 2, "text": "TED talk with murderous schemes sounds like Bill Gates", "correlation": 0.6442024426424157}, {"start": 2, "text": "cool that this ted talk is interactive", "correlation": 0.6364242987306059}, {"start": 2, "text": "#tedtalk", "correlation": 0.6277888542069819}, {"start": 2, "text": "“A Ted talk with a murderous rhyme scheme” y’all sleepin on this verse 🔥", "correlation": 0.5991717238725406}, {"start": 2, "text": "Y’all sleeping on the subtle melodies in that first part. “A Ted talk with murderous rhyme scheme” 🔥", "correlation": 0.5772365131426641}, {"start": 2, "text": "\"A Ted talk with a murderous rhyme scheme\" pretty much applies to all his songs so far lol", "correlation": 0.5579909675913691}, {"start": 2, "text": "he’s preaching and spitting 🙇🏽‍♂️🤷🏽‍♂️💯", "correlation": 0.5248517058020363}, {"start": 2, "text": "Amazing song but a missed opportunity you could’ve edited yourself in the stage and the screens have photos of things you say and had a fr Ted talk", "correlation": 0.5235639343719474}, {"start": 2, "text": "man this really spoke to me just the way he delivers his words reaches me with the effect of the bible almost ands its funny cause he is dressed like jesus man remble some else- curly out", "correlation": 0.49926922973308663}, {"start": 2, "text": "The speech at the end so real", "correlation": 0.49618738490255554}, {"start": 2, "text": "Imagine pulling up ted talks in class scrolling then clicking this then have an epiphany then go throug all stages of enlightenment", "correlation": 0.4907300046675459}, {"start": 2, "text": "This dude word play is bananas. Video started out as one of those meditation get away trips, Lol.", "correlation": 0.4758250695142849}, {"start": 2, "text": "He said- “ he had a problem I put my Glock away and spit on him” 😭😤😫🥰🥰🥰🥰🥰😌😇😅🤧😬 somebody check if u allowed to do that 😧😂😂😂😂😂😂😂😂😂😂😂😂😂😂 that was amazing  …… encore encore", "correlation": 0.4710054222794168}, {"start": 2, "text": "I fuckin love how this nigga just talkin in his music dawg. Im lookin for a message in music.", "correlation": 0.4600630277390516}, {"start": 2, "text": "Remble doesn't have Ted Talks. He has Theodore Discussions.", "correlation": 0.4548896140733989}, {"start": 2, "text": "This man the polar opposite of a mumble rapper", "correlation": 0.4408510244352717}, {"start": 5, "text": "Who is the white dude", "correlation": 0.5209204394080889}, {"start": 5, "text": "Spitting fire", "correlation": 0.4552128692072416}, {"start": 5, "text": "Lol the white dude is hilarious", "correlation": 0.4459172076617253}, {"start": 5, "text": "where the white guy come from?🤣", "correlation": 0.4384781932217016}, {"start": 5, "text": "This dude is like a Key n Peele skit.", "correlation": 0.41624913036267214}, {"start": 5, "text": "why he always sweating on his videos he on drugs or something", "correlation": 0.4131124677366266}, {"start": 10, "text": "Don’t Cry No More Momma", "correlation": 0.6261718423475586}, {"start": 10, "text": "“Don’t cry no more mama”", "correlation": 0.5861247333044004}, {"start": 10, "text": "Don’t cry no more mama look it’s a 10 piece", "correlation": 0.404479015015106}, {"start": 10, "text": "white dude got me crying", "correlation": 0.4035360147694565}, {"start": 11, "text": "Don’t cry no more mama here look it’s a 10 piece 😭🔥 0:11", "correlation": 0.4297720079464994}, {"start": 12, "text": "\"I just want flawless diamonds caucasian like white people\" DAWG THIS NIGGA IS FLOWING", "correlation": 0.51433068684278}, {"start": 13, "text": "I just want flawless diamonds, Caucasian, like white people!", "correlation": 0.5890193347925763}, {"start": 13, "text": "\"I just want flawless diamonds Caucasian like white people\" is a bar", "correlation": 0.5073069744281997}, {"start": 13, "text": "He's saying he wants white diamonds. They come in different colors.", "correlation": 0.4193871911849923}, {"start": 13, "text": "I wish I had diamonds but I’m broke", "correlation": 0.40163173373348804}, {"start": 18, "text": "couldve swear he was floatin", "correlation": 0.4474483927793396}, {"start": 20, "text": "2021 is the year i see a million", "correlation": 0.6995986432669653}, {"start": 20, "text": "2021 is mos def the year you see a million", "correlation": 0.6530334862233188}, {"start": 20, "text": "Jesus walkin on water 🔥", "correlation": 0.5811181092157166}, {"start": 20, "text": "He's right 2021 is the year he hits a million.", "correlation": 0.5254374536430515}, {"start": 20, "text": "2thousand 21 is the year that i see a million 😭🤣🦍", "correlation": 0.522220720259673}, {"start": 20, "text": "\"2021 is the year that i see a million\"\r big bro you got 18 of those, good job istg✨🤍", "correlation": 0.5098090347344543}, {"start": 20, "text": "2022 is the year", "correlation": 0.48328580367597185}, {"start": 20, "text": "Like he said 2021is the  year we reach a million, he just did it!💯✔ THE BEGINNING ..OF A LEGEND!", "correlation": 0.4794623797392101}, {"start": 20, "text": "2021", "correlation": 0.4370317135027427}, {"start": 20, "text": "One in a million best out in 2021!!!!!!!!!!", "correlation": 0.41406773297827043}, {"start": 21, "text": "I grew up on this beach still live here", "correlation": 0.461395158504243}, {"start": 21, "text": "It's 2025", "correlation": 0.4127035959915712}, {"start": 23, "text": "I might just have some kids to play with my brothers children", "correlation": 0.6865222226625797}, {"start": 23, "text": "might just have some kids to play with my brothas children", "correlation": 0.6211286575177378}, {"start": 23, "text": "Beach Preachin", "correlation": 0.5756585403997014}, {"start": 23, "text": "“I might just have some kids,to play with my brother’s children” that’s grown man shit!! 🔥🔥", "correlation": 0.4249989835941967}, {"start": 24, "text": "White boy was just out surfing ended up ina music video 🤣😂", "correlation": 0.5403728678048049}, {"start": 24, "text": "I might just have some babies to play with my brothers children lol sick asf", "correlation": 0.5257418061989114}, {"start": 24, "text": "Which one of his friends let him hop in the studio and sing 🤣", "correlation": 0.45620100722229456}, {"start": 24, "text": "This might be fire to other people but I don’t understand the vision and image he tryna point out ion really like it but that’s just me", "correlation": 0.45351042203153885}, {"start": 24, "text": "My boy made a music video at del perro pier", "correlation": 0.44522022055623633}, {"start": 27, "text": "I was with you until you Said what's independent????...nigga everything....", "correlation": 0.5276725637864116}, {"start": 27, "text": "I thought this was a Nigerian music video 😂😂", "correlation": 0.437395401178848}, {"start": 28, "text": "One funny music video", "correlation": 0.5021799244271712}, {"start": 28, "text": "Song and video delivered perfectly", "correlation": 0.47602880999861347}, {"start": 28, "text": "why do i keep replaying cause its fire when the beat drops it sound familiar", "correlation": 0.4411440024604084}, {"start": 28, "text": "This music video got it☠️", "correlation": 0.43891721104623516}, {"start": 28, "text": "The king of 2 minute songs.", "correlation": 0.43526064899123834}, {"start": 28, "text": "Song changed the way i view things", "correlation": 0.40386341642459095}, {"start": 28, "text": "This the new wave. Super original !", "correlation": 0.4018721921274415}, {"start": 29, "text": "Remember when I wasn’t anything but a Co defendant 😞", "correlation": 0.64895232321668}, {"start": 29, "text": "Damn y'all niggas ain't hot wearing sweaters  hoodies , and trench coats at the beach?", "correlation": 0.5612476236517642}, {"start": 29, "text": "So we just gon act like that one yute wasn’t at the beach in a fat ass jacket a hoodie and a skully", "correlation": 0.5484296526011331}, {"start": 29, "text": "remember when i wasnt anything but a co-defindent", "correlation": 0.43807043960984343}, {"start": 30, "text": "“Remember when I wasn’t anything but a co defendant” felt that 😔", "correlation": 0.5735007074426445}, {"start": 34, "text": "Ever since that draco   Cosigned-it flows with rivers", "correlation": 0.562222444165756}, {"start": 34, "text": "\"ever since that drakeo co-sign he flows with rivers\"", "correlation": 0.4953275403070115}, {"start": 34, "text": "Ever since that drakeo co sign he FLOWS with rivers 👨🏻‍🦳👵🏻 LMAOOOOO", "correlation": 0.4460820793214655}, {"start": 34, "text": "He switched the flow so many times🤌🏽💪🏽", "correlation": 0.4338907489500354}, {"start": 36, "text": "Michael Phelps in unison with controlled swimmers", "correlation": 0.7978672853475924}, {"start": 36, "text": "“Micheal Phelps in unison with controlled swimmers” 🏊‍♂️🏊‍♂️🏊‍♂️", "correlation": 0.7200108833291857}, {"start": 36, "text": "Michael Phelps in unison", "correlation": 0.6601032051124441}, {"start": 36, "text": "Nobody:     Remble: Micheal phelps in Unison with controlled swimmers.", "correlation": 0.6306552295360497}, {"start": 36, "text": "Michael Phelps In unison with controlled swimmers… I seen ppul robbed at parties, the coldest strippers…  Rearranged a Fitted, A Bakery of Biscuits, Ks n Pistols with extensions… 😂🗞🔥", "correlation": 0.5529076693786151}, {"start": 36, "text": "that random white guy in a wet suit made me chuckle", "correlation": 0.5496350900313849}, {"start": 36, "text": "Ever since that drakeo co-sign he flows with rivers , Michael Phelps in unison with controlled swimmers 😳⁉️ WHAT", "correlation": 0.5382864421232763}, {"start": 36, "text": "If watch them surfers n the water those are the same ones . It's just all luv . If u was walking yo dogg you probably would've been in it", "correlation": 0.5041794858387283}, {"start": 36, "text": "The fact he got a random surfer in the vid is legendary", "correlation": 0.4858745604323836}, {"start": 36, "text": "That random surfer guy 😂", "correlation": 0.48357351504372315}, {"start": 36, "text": "The random white surfer guy is so funny for some reason", "correlation": 0.46921307117579486}, {"start": 36, "text": "It was a dope metaphor he mentioned a feature he did then calls himself michael Phelps and drakeo just swam with him", "correlation": 0.41517588114642734}, {"start": 42, "text": "I seen people at parties Rob the coldest Strippers 🔥🔥", "correlation": 0.5076431363814411}, {"start": 42, "text": "I fw this. Bro needs to spend more time in front of the camera tho and get more comfortable", "correlation": 0.46882617440613117}, {"start": 42, "text": "I seen people robbed at parties the coldest strippers", "correlation": 0.44801834253761436}, {"start": 42, "text": "I seen niggas get robbed at parties, the coldest strippers oooooo😪🫠", "correlation": 0.4322733149139439}, {"start": 43, "text": "Hold up wait a minute Y’all thought I was finished!?? 🔥🔥🔥🔥🔥🔥👿", "correlation": 0.5387754484450451}, {"start": 43, "text": "Hold on wait a minute yall thought he was finished", "correlation": 0.48643597140517214}, {"start": 43, "text": "Y’all thot I was finish 🚒🧃🔥🔥🐐", "correlation": 0.452629314429716}, {"start": 43, "text": "Bro you get it the mask came out when he was  starting to rap", "correlation": 0.435407249741714}, {"start": 43, "text": "What In The World He Has On???", "correlation": 0.4310659332494532}, {"start": 43, "text": "“Hold on wait a minute y’all thought I finished?”", "correlation": 0.4103225658481789}, {"start": 45, "text": "The 2 surfer dudes in the video cracking me up lmao", "correlation": 0.6056622482142077}, {"start": 45, "text": "TF up with the white dude in the wet suit", "correlation": 0.5633048544253444}, {"start": 45, "text": "Y’all rlly put the surfer in the wetsuit in the vid🤦🏻‍♂️🔥🔥 stupid hard", "correlation": 0.5586093322882196}, {"start": 45, "text": "why grey hoodie man finger his booty hole at the end after shaking remble hand?", "correlation": 0.5286361237991335}, {"start": 45, "text": "Seen this multiple times just barely noticed the surfer homie😂 “AND THEN YOU GET PITTED, SO PITTED 🏄🏼‍♂️” headass 😂", "correlation": 0.5245867661146916}, {"start": 45, "text": "At the very end when remble shaking there hands dude sticks his figure in his ass😂", "correlation": 0.5020909976549357}, {"start": 45, "text": "Where the fuck did that white guy come from", "correlation": 0.4947041519894987}, {"start": 45, "text": "That nigga in the gray hoodie scratched his ass", "correlation": 0.4780286342886237}, {"start": 45, "text": "He hit the all black at the end", "correlation": 0.4709103725976112}, {"start": 45, "text": "Men In Black his memories🔥🔥💯💪🏾", "correlation": 0.4609416744482464}, {"start": 45, "text": "vernacular boxing", "correlation": 0.4604404342952826}, {"start": 45, "text": "This shit slap", "correlation": 0.460140989440407}, {"start": 45, "text": "\"Killen any opp and anyone hes with\"", "correlation": 0.4505518886521184}, {"start": 45, "text": "Why was bro cuppin his ass like that at the end lmao", "correlation": 0.43340292172569644}, {"start": 45, "text": "Remble you need to tuck your elbows when you put your fists up, your leaving you're body open lol", "correlation": 0.42123536809723167}, {"start": 45, "text": "He takes his time but when he catches the beat it's with murderous intent", "correlation": 0.41820795832906393}, {"start": 45, "text": "Have you noticed the way he fights", "correlation": 0.4137078575532947}, {"start": 45, "text": "He doesn’t hit people with guitars, he simply picks up a piece of wood that has now gained the name “Guitar”. He swings the piece of wood at a human being at a rapid pace with the malicious intent to harm.", "correlation": 0.40422873995841313}, {"start": 45, "text": "Dude hit him with that mind transfer jutsu.", "correlation": 0.40154310195017257}, {"start": 47, "text": "The surfer just thrown in the video", "correlation": 0.5980795978851519}, {"start": 47, "text": "So where did the surfer in the surf suit come from?? I love dis shit 😂", "correlation": 0.5736446104588024}, {"start": 47, "text": "The white dude in the wetsuit... Was he just a random dude surfing that just walked up and was like \" It's Remble\" and hit tossed in that scene🤔", "correlation": 0.523439806909195}, {"start": 47, "text": "This man's flow never fails to amaze me", "correlation": 0.4988435892482559}, {"start": 47, "text": "the fucking random surfer 😂😂🤣🤣🤣", "correlation": 0.49194057716499767}, {"start": 47, "text": "Dude was randomly surfing and ended up in the video🤣that's hella cool", "correlation": 0.48913003706128827}, {"start": 47, "text": "Surfer bruh lmao", "correlation": 0.48011802407214743}, {"start": 47, "text": "\"rearrange the fitted\" 🧢 🥶", "correlation": 0.4662563747702075}, {"start": 47, "text": "This man is built different.", "correlation": 0.4579028845458313}, {"start": 47, "text": "The surfer foo 🤣", "correlation": 0.44424278841504616}, {"start": 47, "text": "Wtf this man is hard af! His articulation is so different!", "correlation": 0.44413699962535086}, {"start": 47, "text": "The random ass surfer 🤣🤣 yessir", "correlation": 0.4300145964132315}, {"start": 47, "text": "Remble next up.", "correlation": 0.4279935641230998}, {"start": 47, "text": "like he said before. ITS REMBLE 🔥🔥", "correlation": 0.4268621486402644}, {"start": 47, "text": "Scuba diver came out of nowhere 🤣", "correlation": 0.42609143963191815}, {"start": 47, "text": "REMEMBLE UP NEXT", "correlation": 0.4027001087548312}, {"start": 47, "text": "He really switched his flow back to back!🔥", "correlation": 0.4008283244483287}, {"start": 48, "text": "The dance 🔥🔥🔥🔥🔥🔥", "correlation": 0.6110940039979795}, {"start": 48, "text": "That dance move hard 🕺🏽🕺🏽🕺🏽", "correlation": 0.5511926865516072}, {"start": 48, "text": "His little dance goes hard 🤣🤣", "correlation": 0.5404378800285893}, {"start": 48, "text": "A BAKERY OF BISCUITS 🔊 🔊 love that part lol", "correlation": 0.5402537767285879}, {"start": 48, "text": "A bakery of biscuits, K's and pistols wit extensions, We're not exchanging mittens🔥🔥🔥🔥", "correlation": 0.5250850137173151}, {"start": 48, "text": "filmed in huntington beach baby", "correlation": 0.4935352089932871}, {"start": 48, "text": "You needa make a dance", "correlation": 0.4763997083640551}, {"start": 48, "text": "PERFECT SCENE FOR THIS SONG", "correlation": 0.47392408266101094}, {"start": 48, "text": "Remble the next CRIP OUTTA LA😈🥶 and he got his homies to do the dance this video like he said in the interview😂🤣", "correlation": 0.44529110301259406}, {"start": 48, "text": "Yooooo this is in HUNTINGTON BEACH ! 😈😤💯", "correlation": 0.429196307330707}, {"start": 48, "text": "los santos beach bruh", "correlation": 0.4266897577346156}, {"start": 52, "text": "0:52 “you’re about to witness Floyd mayweather with good penmanship” what", "correlation": 0.8035414395014477}, {"start": 52, "text": "This is him wearing a dress he’s in now he’s just gonna blow up now", "correlation": 0.541310522180639}, {"start": 52, "text": "\"You're about to experience floyd Mayweather with good penmanship\" on foe he goin", "correlation": 0.5074612787623539}, {"start": 52, "text": "\"your about to witness Floyd Mayweather wit good penmanship\"😂😂", "correlation": 0.49291680819691763}, {"start": 52, "text": "Mayweather with good penmanship 🔥🔥", "correlation": 0.4660064851978117}, {"start": 52, "text": "“Floyd Mayweather with great penmanship” 😂😂😂💯🔥🔥🔥", "correlation": 0.4607614202212937}, {"start": 52, "text": "Floyd Mayweather with good penmanship   bro this hit hard", "correlation": 0.45653565713018596}, {"start": 52, "text": "Floyd Mayweather with good penmanship is diabolical", "correlation": 0.4511544505096427}, {"start": 53, "text": "ii bet those surfers were just walking by and they put them in the vid 😂😂", "correlation": 0.6881123465168744}, {"start": 53, "text": "I just realized there were surfers", "correlation": 0.676043744453299}, {"start": 53, "text": "broo imagine seeing this vid being filmed just chillin at the beach LAMO!!!!!", "correlation": 0.6421815380165408}, {"start": 53, "text": "Those surfers had no idea the legend they were in a video with", "correlation": 0.6153427566707389}, {"start": 53, "text": "i love how there's a random surfer in the video hahaha", "correlation": 0.6106912561935454}, {"start": 53, "text": "anyone peep the random dude in the wetsuit that joined in? 100% they just found him there at the beach n vibed wit him🤣🤣", "correlation": 0.603904018497321}, {"start": 53, "text": "You already know those guys got done with their surf and had to pull up in the video", "correlation": 0.6024278230091497}, {"start": 53, "text": "This was shot on the GTA 5 beach", "correlation": 0.5895811574033571}, {"start": 53, "text": "shout out the random surfer they let be in the video lol", "correlation": 0.5888399445296547}, {"start": 53, "text": "So no one mentioning the Whyte guy surfer just was invited into the video he was surfing in the background at first🤣", "correlation": 0.5738267526347475}, {"start": 53, "text": "The surfer dudes lmao", "correlation": 0.570539487784842}, {"start": 53, "text": "Those random white boy surfers cracked me tf up for some reason 😅💀", "correlation": 0.5696395428885381}, {"start": 53, "text": "Why is nobody gon talk abt the white surfer dude in the video", "correlation": 0.5668952068243609}, {"start": 53, "text": "Gotta love the surfer posted up wit em", "correlation": 0.5497297398605994}, {"start": 53, "text": "the two  surfers tho", "correlation": 0.5352087317537234}, {"start": 53, "text": "The 2 random surfer dudes 💀", "correlation": 0.5285061128069553}, {"start": 53, "text": "Bro the surfer look like an npc spawning in a place they shouldn’t be", "correlation": 0.525680295938213}, {"start": 53, "text": "The random white surfer in the music video vibing is taking me tf out! lmfao", "correlation": 0.5231638403296355}, {"start": 53, "text": "That random ass surfer 😭🤣", "correlation": 0.5019913096933464}, {"start": 53, "text": "Huntington Beach Vibes with old heads hopping into the water behind you", "correlation": 0.49743036303309157}, {"start": 56, "text": "Fades at the beach 😂", "correlation": 0.5275700576432186}, {"start": 57, "text": "Bro is doing a poem", "correlation": 0.4636614451301142}, {"start": 58, "text": "“If I get Grammy I’m Kanye west I’ll take a piss on it”…..", "correlation": 0.6725779732674064}, {"start": 58, "text": "If I get a Grammy I piss on it like kanya west", "correlation": 0.6114603853605068}, {"start": 58, "text": "Thats not what he said lmaooo he said if i win a grammy im kanye west i piss in it", "correlation": 0.5720336539802074}, {"start": 58, "text": "@fatboynelly5723  you're both braindead, he said \"if I win a Grammy I'm Kanye West I'll take a piss on it\"", "correlation": 0.5656351568419897}, {"start": 58, "text": "Grabbed some random surfer like, Yo dance real quick lmao", "correlation": 0.5239727262195949}, {"start": 58, "text": "“I’m Kanye west I’ll piss on you” bro no way he listens to piss on your grave", "correlation": 0.4839643287098998}, {"start": 58, "text": "Give dis man a grammy", "correlation": 0.4246075803541879}, {"start": 58, "text": "@bandogetrich5  he said like Kanye take a piss on him", "correlation": 0.4007610797948364}, {"start": 60, "text": "I had a problem got a chop and put a stick on it", "correlation": 0.6539590116941514}, {"start": 60, "text": "“I had a problem then bought a chop and put a stick on it” 🔥🔥🥇", "correlation": 0.5287577359977046}, {"start": 63, "text": "lol some random white boy surfer walked up", "correlation": 0.632398370662976}, {"start": 63, "text": "Hahaha just imagine seeing this at the beach", "correlation": 0.6119842069392978}, {"start": 63, "text": "Yall notice that he's on the gta beach", "correlation": 0.544672486220333}, {"start": 63, "text": "Nigga even the surfer was turnt 🔥😭", "correlation": 0.5332978147355506}, {"start": 63, "text": "White dude was scared asl", "correlation": 0.5185575603381863}, {"start": 63, "text": "Dude really started a cult on that beach haha shits fire", "correlation": 0.49437885049619446}, {"start": 63, "text": "What he say... He had a problem... I put my Glock away an SPIT ON HIM..", "correlation": 0.49121611709807755}, {"start": 63, "text": "He had a problem I put my glock away and spit on him 💀 nigga need to calm down", "correlation": 0.4892216586291805}, {"start": 63, "text": "You knew this shit was gone b fire wen u seen tht random surfer pull up wit them🔥🧢👕👖♿", "correlation": 0.48363394244365415}, {"start": 63, "text": "Anyone see the tall guy scratch his ass or just me🤣🤣", "correlation": 0.46917547430979356}, {"start": 63, "text": "I put my Glock away then spit on him MY GOD", "correlation": 0.46702957216079316}, {"start": 63, "text": "“he had a problem, i put my glock away and spit on him” 🤣🤣", "correlation": 0.4448737114630127}, {"start": 63, "text": "He had uh problem put mah glock away and spit on em...G.O.D", "correlation": 0.41848496005872937}, {"start": 63, "text": "“Most of the time, I was in school jus to walk in line. See other guys hop in the pool jus to hide from light”", "correlation": 0.41693053763049837}, {"start": 63, "text": "“He had a problem I put my glock away and spit on him” so reckless🤦🏾‍♂️‼️‼️‼️🥶🥶", "correlation": 0.4100050357827165}, {"start": 63, "text": "“he a problem i put my glock away n spit on him” bro😭🔥", "correlation": 0.4023086675159043}, {"start": 65, "text": "Killing is common it's just so sad his kids depend on him.", "correlation": 0.7089277351962541}, {"start": 65, "text": "“Killing is common it’s so sad his kids depend on him.” Sheeeesh", "correlation": 0.5663233663844387}, {"start": 65, "text": "\"Killing is so common its sad that his kids depend on him\" 🤓🔥 🔥", "correlation": 0.4969159296455576}, {"start": 65, "text": "I like he just spat at the perpetrator instead of killing, because his kids depend on him.", "correlation": 0.4664993596211185}, {"start": 65, "text": "I don't wanna be a part of this world after watching this", "correlation": 0.40639792983575196}, {"start": 66, "text": "The surfurs that are dancing with them 🤣🤣🤣", "correlation": 0.7071067811865476}, {"start": 66, "text": "The surfer on the right vibing and got the rhythm and the one on the left look so confused like he don’t kno why he there😭😭", "correlation": 0.6545708135184745}, {"start": 66, "text": "Lmao nobody gonna notice the surfer boys hitting that fighting dance", "correlation": 0.6337328148285412}, {"start": 66, "text": "Same ppl in every music video XD the gang always with this guy 👌", "correlation": 0.5573552682900774}, {"start": 66, "text": "The beat is so hard", "correlation": 0.4415746332150986}, {"start": 67, "text": "no one talking about random surfers at 1:07", "correlation": 0.795126624441661}, {"start": 71, "text": "Beat goes hard", "correlation": 0.4081850074331614}, {"start": 73, "text": "That random white boy who just joined the video", "correlation": 0.4631787745046726}, {"start": 74, "text": "Stripped him for everything then we men in blacked his memories 😳", "correlation": 0.6285147355478212}, {"start": 74, "text": "Stripped him of everything, then we men in black'd his memories*", "correlation": 0.608897889036547}, {"start": 74, "text": "Stripped em for everything and then we men in blacked his memories 😎📸", "correlation": 0.5744382273098962}, {"start": 74, "text": "“Stripped em for everything then we Men In Blacked his memories” 🔥🔥🔥", "correlation": 0.5247619536099001}, {"start": 74, "text": "Stripped him of everything then we men and black his memories stank face on stuck 🔥🔥🔥🔥🔥", "correlation": 0.5150674173990473}, {"start": 74, "text": "1:14 Then we men in black just memories. That was fire", "correlation": 0.4805098027288104}, {"start": 74, "text": "Strip him for everything then we MEN IN BLACC HIS MEMORIES OH MY GOD", "correlation": 0.4785686134797744}, {"start": 74, "text": "\"stripped him of everything, and then we're Men in Black...\" That was HARD.", "correlation": 0.467617248063398}, {"start": 74, "text": "Striped him for everything, then mib his memories", "correlation": 0.43747330600723566}, {"start": 75, "text": "1:15 \"some surfers\" love it 😂", "correlation": 0.5205398822233062}, {"start": 76, "text": "third guy was trying not to laugh when shaking remble hands", "correlation": 0.5921482428198479}, {"start": 76, "text": "The way we just did him his friends wondering what he did to me 🤣🤣", "correlation": 0.590523749903618}, {"start": 76, "text": "Killers Anonymous meeting at the beach?", "correlation": 0.5750309733431861}, {"start": 76, "text": "Friends:  and I start to wonder what he did he do to make them niggas that mad", "correlation": 0.518390793557697}, {"start": 76, "text": "\"Men In Blacked his memories\"(Remble).", "correlation": 0.50411392514126}, {"start": 76, "text": "The white boys stiff", "correlation": 0.47340363156662546}, {"start": 76, "text": "The random white guys joining in is wholesome lol", "correlation": 0.46662897968448697}, {"start": 76, "text": "DID NOBODY NOTICE THE RANDOM WHITE DUDE", "correlation": 0.45590463998418956}, {"start": 76, "text": "We men in black we memories fuckkkkkkkking guyyyyy", "correlation": 0.4477143926328598}, {"start": 76, "text": "\"We men in black as memories\" wow how does he come up with these so creative and so specific words out of nowhere", "correlation": 0.4357086822862208}, {"start": 76, "text": "them 2 white dudes fsho random lol", "correlation": 0.42706911147267407}, {"start": 76, "text": "That one guy at the end when they were shaking hands was dying lmaooo", "correlation": 0.4163032373399871}, {"start": 76, "text": "Bro I agree, if he changes it to white peeps I think it would flow way better", "correlation": 0.4131178629157651}, {"start": 76, "text": "Please change the lyric from white people to white peeps I feel like it would rhyme way better", "correlation": 0.41099695222304033}, {"start": 76, "text": "This mans an artist", "correlation": 0.4087597515023923}, {"start": 76, "text": "the white dudes was funny lov yall", "correlation": 0.4035423444318616}, {"start": 76, "text": "Did him so dirty his friends wonder what he did to me. 😅", "correlation": 0.40327278353284435}, {"start": 76, "text": "1:16 the white dude tho", "correlation": 0.4007316006848901}, {"start": 77, "text": "1:17 you all are African Americans and… mark but we rockin with mark cause marks rockin with us 😂😂😂", "correlation": 0.6310439546005249}, {"start": 77, "text": "Yoooo look at how that white boy just cameo utta nowhere at 1:17", "correlation": 0.4952717367587033}, {"start": 77, "text": "1:17 some random ppl just came in the video lol", "correlation": 0.45602846075746883}, {"start": 78, "text": "Hol up did yall se da white dudes in da swim suits", "correlation": 0.5159825695287489}, {"start": 78, "text": "“We really have everything from the cash to the artillery”🔥🔥🔥", "correlation": 0.46902869226055477}, {"start": 78, "text": "loc got surfers 🏄🏽 in vid🤌🏽💯💯💯💙💙💙💙💯💯💯🔥🔥🔥🔥", "correlation": 0.45396431551689104}, {"start": 78, "text": "Don't try to be me  I'm not trying to be you  We are all one from a few  Let's put the guns down  And find away around  Drugs  There are no need for slugs  Frogs are always jumpy  Snakes know how to swim  Sharks can walk  Tell me why I just talk  Art is in the start  Please don't use my lines", "correlation": 0.44322405357651257}, {"start": 78, "text": "Niggas really jus talking", "correlation": 0.43612906112063415}, {"start": 78, "text": "“White people” that’s facts🔥🔥🧍🏻‍♂️", "correlation": 0.43414129589850114}, {"start": 78, "text": "Who them white boys🤣", "correlation": 0.42203005473218186}, {"start": 78, "text": "The white bois made the video😂😂😂 wasn’t expecting them that’s all", "correlation": 0.41008888580425606}, {"start": 78, "text": "LMAOOOOO THE WHITE DUDES", "correlation": 0.4074863679797381}, {"start": 79, "text": "my nigga snappin on the beach", "correlation": 0.5970391607808092}, {"start": 79, "text": "This is so weird what is he wearing", "correlation": 0.43793167912671654}, {"start": 81, "text": "What's the name of that robe he's wearing ?", "correlation": 0.4483934373122195}, {"start": 81, "text": "My opps turns to fans it's like they don't even plan on killing me", "correlation": 0.4451007617552358}, {"start": 81, "text": "\"My opps turned to fans it's like they  don't even plan on killin me\"", "correlation": 0.4018047859867939}, {"start": 100, "text": "Yo i bet no one 😂😂peeped the 3rd guy that shook rembles hand grabbing his ass after he walks away", "correlation": 0.5013381183367203}, {"start": 100, "text": "yo the song was some mad fire but why did the third guy at 1:40 touch his ass like that as he walked away... da FUCK", "correlation": 0.49665407173234805}, {"start": 100, "text": "tall kid at 1:40 need to wipe better ...i cant!!!", "correlation": 0.43720130060176565}, {"start": 100, "text": "ALWAYS KNOW YOUR WORTH 🥇", "correlation": 0.40124917745539346}, {"start": 109, "text": "Shaking their hands as they thank him for the eulogy 🙏🙏🙏", "correlation": 0.43593128400791364}, {"start": 110, "text": "Thank you", "correlation": 0.48409871647659003}, {"start": 110, "text": "Bluntington beach", "correlation": 0.4176282444782107}, {"start": 110, "text": "A Demon in Angel's Clothing.", "correlation": 0.4010721564535706}, {"start": 111, "text": "Who are the white boys that join in the video that's shit had me dead like where did they come from😂?", "correlation": 0.49107608142249093}, {"start": 111, "text": "🤛🏿💪🏾🤛🏿💪🏾🤛🏿💪🏾🎶🔥💯 Remble dance emoji", "correlation": 0.4438557005989632}, {"start": 120, "text": "Where this beat from?", "correlation": 0.47329332185098943}, {"start": 120, "text": "Damn thought this was another gta music video", "correlation": 0.4459672811159941}] : null);
+    if(!Array.isArray(danmakuComments)){
+      danmakuComments = [
+        { start: 0.5, text: "첫 댓글!" },
+        { start: 1.5, text: "오른쪽에서 등장합니다" },
+        { start: 3.0, text: "왼쪽으로 사라져요" },
+        { start: 5.0, text: "시킹해도 잘 동작" },
+      ];
+    }
+
+    // ===== 요소 참조 / 전역 상태 =====
+    var video = null;
+    var videoContainer = null;
+    var playPauseBtn = null, playIcon = null, pauseIcon = null;
+    var progressContainer = null, progressBar = null;
+    var timeDisplay = null;
+
+    var isDragging = false;          // 진행바 드래그
+    var activeDanmaku = new Map();   // idx -> { element, currentX, width, y }
+    var animationId = null;
+    var isPaused = false;            // 비디오 정지 동기화
+    var lastRafTime = 0;             // requestAnimationFrame 시간
+    var lastVideoTime = 0;           // 직전 timeupdate의 비디오 시간 (시킹 대비)
+    const DANMAKU_SPEED = -100;       // px/s (음수=왼쪽)
+
+    document.addEventListener('DOMContentLoaded', function(){
+      video = document.getElementById('video-player');
+      videoContainer = document.getElementById('video-container');
+      playPauseBtn = document.getElementById('play-pause-btn');
+      playIcon = document.getElementById('play-icon');
+      pauseIcon = document.getElementById('pause-icon');
+      progressContainer = document.getElementById('progress-container');
+      progressBar = document.getElementById('progress-bar');
+      timeDisplay = document.getElementById('time-display');
+
+      // start 기준 정렬
+      danmakuComments.sort((a,b) => a.start - b.start);
+
+      // 이벤트 바인딩
+      video.addEventListener('timeupdate', onTimeUpdate);
+      video.addEventListener('loadedmetadata', updateTimeDisplay);
+      video.addEventListener('play', () => { updatePlayPauseButton(); lastVideoTime = video.currentTime || 0; resumeAllDanmaku(); });
+      video.addEventListener('pause', () => { updatePlayPauseButton(); pauseAllDanmaku(); });
+      video.addEventListener('seeking', resetDanmakuForSeek);
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      progressContainer.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', endDrag);
+      progressContainer.addEventListener('click', (e)=>{ if(!isDragging) seekVideo(e); });
+
+      // 리사이즈 시 현재 떠있는 단무쿠 위치/퇴장 판정 보정
+      window.addEventListener('resize', () => {
+        // 큰 레이아웃 변화에서는 간단히 리셋
+        resetDanmakuForSeek();
+      });
+
+      // 초기 상태
+      updatePlayPauseButton();
+    });
+
+    function togglePlayPause(){ if(video.paused) video.play(); else video.pause(); }
+
+    function updatePlayPauseButton(){
+      if(!video) return;
+      if(video.paused){
+        playIcon.style.display='block';
+        pauseIcon.style.display='none';
+      } else {
+        playIcon.style.display='none';
+        pauseIcon.style.display='block';
+      }
+    }
+
+    function updateTimeDisplay(){
+      if(!video || !video.duration) return;
+      const cur = formatTime(video.currentTime || 0);
+      const tot = formatTime(video.duration);
+      timeDisplay.textContent = cur + ' / ' + tot;
+    }
+
+    function onTimeUpdate(){
+      if(!video) return;
+      const t = video.currentTime || 0;
+
+      // 진행바
+      if(video.duration){
+        progressBar.style.width = ((t / video.duration) * 100) + '%';
+      }
+      updateTimeDisplay();
+
+      // 직전 프레임 ~ 현재 사이에 start가 들어온 댓글만 트리거
+      danmakuComments.forEach(function(cmt, idx){
+        if(cmt.start > lastVideoTime && cmt.start <= t && !activeDanmaku.has(idx)){
+          const delay = Math.random() * 200; // 0~200ms (원하면 제거)
+          setTimeout(() => addDanmakuComment(cmt, idx), delay);
+          if (!animationId) startAnimationLoop();
+        }
+      });
+
+      lastVideoTime = t;
+    }
+
+    // ===== 진행바 제어 =====
+    function startDrag(e){ isDragging = true; e.preventDefault(); updateVideoTime(e); }
+    function doDrag(e){ if(!isDragging) return; e.preventDefault(); updateVideoTime(e); }
+    function endDrag(){ if(!isDragging) return; isDragging = false; }
+    function seekVideo(e){ updateVideoTime(e); }
+
+    function updateVideoTime(e){
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = clamp((e.clientX - rect.left)/rect.width, 0, 1);
+      if (video.duration) {
+        video.currentTime = pos * video.duration;
+        // 시킹 처리: 떠있는 단무쿠 초기화 & 타임 마커 갱신
+        resetDanmakuForSeek();
+      }
+    }
+
+    // ===== 단무쿠 생성 / 애니메이션 =====
+    function addDanmakuComment(cmt, idx){
+      const div = document.createElement('div');
+      div.className = 'danmaku-comment';
+      div.id = 'danmaku-' + idx;
+
+      const txt = (cmt.text ?? '') + '';
+      div.innerHTML = '<div class="comment-text"></div>';
+      div.querySelector('.comment-text').textContent = txt; // XSS 안전
+
+      // 세로 위치: 댓글 텍스트 기반 결정적 위치 (여백 없음)
+      const containerRect = videoContainer.getBoundingClientRect();
+      // 댓글 텍스트를 해시값으로 변환하여 일관된 위치 생성
+      const textHash = hashString(cmt.text || '');
+      const maxHeight = containerRect.height - 25; // 전체 높이 사용
+      const randomY = textHash % maxHeight; // 여백 없음
+
+      // 먼저 붙여서 실제 너비를 잰다
+      div.style.top = randomY + 'px';
+      div.style.left = '0px';
+      div.style.transform = 'translateX(0px)';
+      div.style.transition = 'none';
+      videoContainer.appendChild(div);
+
+      const elWidth = div.getBoundingClientRect().width;
+
+      // 시작 X: 컨테이너 오른쪽 바깥
+      const startX = containerRect.width + 10; // +10 버퍼
+      div.style.transform = `translateX(${startX}px)`;
+
+      // 상태 저장
+      activeDanmaku.set(idx, {
+        element: div,
+        currentX: startX,
+        width: elWidth,
+        y: randomY
+      });
+
+      // 애니메이션 루프 가동
+      if (!animationId) startAnimationLoop();
+    }
+
+    function startAnimationLoop() {
+      function animate(ts) {
+        if (!lastRafTime) lastRafTime = ts;
+        const deltaTime = (ts - lastRafTime) / 1000; // 초
+        lastRafTime = ts;
+
+        if (!isPaused) {
+          updateDanmakuPositions(deltaTime);
+        }
+
+        // 루프 유지: 활성 단무쿠가 없고 비디오도 일시정지면 멈출 수 있음
+        if (activeDanmaku.size === 0 && video?.paused) {
+          animationId = null;
+          lastRafTime = 0;
+          return; // 루프 종료
+        }
+        animationId = requestAnimationFrame(animate);
+      }
+      if (!animationId) animationId = requestAnimationFrame(animate);
+    }
+
+    function updateDanmakuPositions(deltaTime) {
+      // 모든 댓글 동일 속도 왼쪽 이동
+      activeDanmaku.forEach((danmaku, idx) => {
+        if (!danmaku || !danmaku.element) return;
+        danmaku.currentX += DANMAKU_SPEED * deltaTime;
+
+        // 완전 퇴장: 요소의 오른쪽 끝이 화면 왼쪽 밖으로 나가면 제거
+        if (danmaku.currentX + danmaku.width < 0) {
+          danmaku.element.parentNode?.removeChild(danmaku.element);
+          activeDanmaku.delete(idx);
+        } else {
+          danmaku.element.style.transform = `translateX(${danmaku.currentX}px)`;
+        }
+      });
+    }
+
+    // ===== 시킹/재생 동기화 =====
+    function pauseAllDanmaku() { isPaused = true; }
+    function resumeAllDanmaku() { isPaused = false; if (!animationId) startAnimationLoop(); }
+
+    function resetDanmakuForSeek(){
+      // 떠있던 것들 제거
+      activeDanmaku.forEach((d)=>{ d.element?.parentNode?.removeChild(d.element); });
+      activeDanmaku.clear();
+      // 다음 프레임 기준으로 새로 트리거
+      lastVideoTime = video?.currentTime || 0;
+      // 애니메이션 타임라인 초기화
+      lastRafTime = 0;
+    }
+  </script>
+</body>
+</html>
