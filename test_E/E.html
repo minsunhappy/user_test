@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>82-Year-Old Man Covers DROWNING POOLS "Bodies" on Americas Got Talent!</title>
+  <style>
+    /* 기본 스타일 */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #fff; /* 흰색 배경 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .video-title {
+      width: 800px;
+      margin-top: 40px;
+      margin-bottom: 5px;
+      text-align: left;
+      font-size: 20px;
+      font-weight: 600;
+      color: #000;
+      padding: 0;
+      line-height: 1.4;
+    }
+
+    .video-container {
+      width: 800px;
+      margin-top: 20px;
+      position: relative;
+      background-color: #000;
+      overflow: hidden;
+      border-radius: 20px; /* 유튜브 느낌의 둥근 모서리 */
+      transition: all 0.3s ease;
+    }
+
+    video {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: 12px; /* 비디오 둥근 모서리 */
+    }
+
+    /* 기본 비디오 컨트롤 완전히 숨기기 */
+    video::-webkit-media-controls-panel { display: none !important; }
+    video::-webkit-media-controls-play-button { display: none !important; }
+    video::-webkit-media-controls-start-playback-button { display: none !important; }
+    video::-moz-media-controls { display: none !important; }
+    video::--ms-media-controls { display: none !important; }
+
+    /* 커스텀 비디오 컨트롤 */
+    .custom-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.8);
+      padding: 4px 15px 4px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 4;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .video-container:hover .custom-controls { opacity: 1; }
+
+    /* 진행 바 컨테이너 */
+    .progress-container {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      margin-bottom: 6px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    /* 진행 바 */
+    .progress-bar {
+      height: 100%;
+      background: #ff0000;
+      border-radius: 3px;
+      width: 0%;
+      position: relative;
+      transition: width 0.1s ease;
+    }
+
+    /* 진행 바 끝 동그라미 */
+    .progress-handle {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: #ff0000;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .progress-container:hover .progress-handle { opacity: 1; }
+
+    /* 컨트롤 버튼들 */
+    .controls-bottom {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 3px;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-button:hover { background-color: rgba(255,255,255,0.2); }
+
+    .control-button svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    /* 시간 표시 */
+    .time-display {
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* ===================== 댓글 오버레이 (A 스타일) ===================== */
+    .comments-overlay {
+      --overlay-h: 180;             /* JS에서 동적 조정 */
+      --controls-offset: 50px;        /* 컨트롤 보일 때 위로 올릴 거리 */
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      height: var(--overlay-h);
+      pointer-events: none;
+      z-index: 2;
+      background: linear-gradient(to top, rgba(0,0,0,0.80), rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.2) 90%,  rgba(0,0,0,0));
+      overflow: hidden;
+      transition: bottom 0.3s ease, height 0.15s ease;
+    }
+
+    /* 컨트롤이 보일 때 댓글 오버레이를 위로 이동 */
+    .video-container:hover .comments-overlay { bottom: var(--controls-offset); }
+
+    /* 실제 댓글 컨테이너에 mask-image 적용 (가변 stop) */
+    .comments-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      --mask-stop: 100%; /* JS에서 동적 변경 */
+      -webkit-mask-image: linear-gradient(to top, black var(--mask-stop), transparent 100%);
+      mask-image: linear-gradient(to top, black var(--mask-stop), transparent 100%);
+    }
+
+    /* 좋아요/하트를 별도 레이어로 분리하여 마스크 영향 제거 */
+    .likes-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .like-item {
+      position: absolute;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: opacity 0.3s ease;
+    }
+
+    /* 각 댓글 요소 */
+    .live-comment {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      transition: bottom 0.2s ease, opacity 0.3s ease-in-out;
+    }
+
+    /* 댓글 내용 레이아웃 */
+    .comment-content { display: flex; align-items: flex-start; width: 100%; }
+
+    .text-content { flex: 1; }
+
+    .user-info { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+
+    .username { font-weight: normal; font-size: 14px; }
+
+    .comment-text {
+      font-size: 18px;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      flex: 1;
+    }
+
+    .profile-icon { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+    .profile-photo { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+
+    .likes { display: flex; flex-direction: column; align-items: center; align-self: flex-start; gap: 2px; margin-left: 8px;}
+
+    .heart-icon { 
+      width: 20px; 
+      height: 20px; 
+      fill: #ff0000; 
+      opacity: 1;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+    }
+
+    .likes-number { 
+      color: #ff0000; 
+      font-size: 14px; 
+      opacity: 1;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+    }
+  </style>
+</head>
+  <body>
+    <!-- 제목을 영상 위에 배치 -->
+    <div class="video-title">82-Year-Old Man Covers DROWNING POOLS "Bodies" on Americas Got Talent!</div>
+    <div class="video-container">
+    <video id="video-player">
+      <source src="./wFKBN3MGUGI.mp4" type="video/mp4" />
+      브라우저가 video 태그를 지원하지 않습니다.
+    </video>
+
+    <!-- 커스텀 비디오 컨트롤 (A 스타일: 플레이/일시정지 + 진행바 + 시간만) -->
+    <div class="custom-controls">
+      <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-handle"></div>
+        </div>
+      </div>
+      <div class="controls-bottom">
+        <button class="control-button" id="play-pause-btn">
+          <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <div class="time-display" id="time-display">0:00 / 0:00</div>
+      </div>
+    </div>
+
+    <!-- 댓글 오버레이 (A 스타일: 높이/마스크 동적) -->
+    <div class="comments-overlay" id="comments-overlay">
+      <div class="comments-container" id="comments-container"></div>
+      <div class="likes-overlay" id="likes-overlay"></div>
+    </div>
+  </div>
+
+  <script>
+    // 숫자 포맷: 1k 단위
+    function formatLikes(n){
+      if(n < 1000) return n.toString();
+      let f = (n/1000).toFixed(1);
+      if(f.endsWith('.0')) f = f.slice(0,-2);
+      return f + 'k';
+    }
+
+    // mm:ss
+    function formatTime(sec){
+      const m = Math.floor(sec/60);
+      const s = Math.floor(sec%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    // 랜덤 사용자명/색상
+    function getRandomName(){
+      const names = ["Alice","Bob","Charlie","David","Eva","Frank","Grace","Helen","Ivy","Jack"];
+      return names[Math.floor(Math.random()*names.length)];
+    }
+    function getRandomColor(){
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for(let i=0;i<6;i++){ color += letters[Math.floor(Math.random()*16)]; }
+      return color;
+    }
+
+    // 서버에서 주입되는 최적 댓글 리스트
+    var optimalComments = [{"start": 0, "end": 2, "reading time": 2.0, "text": "This man has legs", "reward": 1.6840989520002847, "correlation": "0.4210247380000712", "corr_A": "0.0", "corr_V": "0.6", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/ytc/AIdro_kmx5rnxDFMZ9zo0G_aG7ymLxsgUEtNyFJJQLXZzQ5DO-Q=s88-c-k-c0x00ffffff-no-rj", "author": "@jimmothypakistan5223"}, {"start": 2, "end": 8, "reading time": 6.0, "text": "And you know what? good on Howie for having some respect and actually standing to applaud this man! Other judges are way to prissy", "reward": 11.837346999607508, "correlation": "0.5388029507293517", "corr_A": "0.0", "corr_V": "0.76", "likes": 109.0, "norm_likes": 0.8952852651425479, "photo": "https://yt3.ggpht.com/ytc/AIdro_m_Fcw9KEf64WaNfonor4d0EEhz9SemV2EfcyIYPjIMLv0=s88-c-k-c0x00ffffff-no-rj", "author": "@noxickid9143"}, {"start": 8, "end": 12, "reading time": 4.0, "text": "the audience is so overly dramatic its annoying", "reward": 7.38210227694073, "correlation": "0.47636261044518685", "corr_A": "0.16", "corr_V": "0.65", "likes": 104.0, "norm_likes": 0.8928003483448087, "photo": "https://yt3.ggpht.com/ytc/AIdro_nRrAFZZB75Xqbgou_9romdAbiA6HYq2ZBUmf-kMOhT3w=s88-c-k-c0x00ffffff-no-rj", "author": "@deathknight161"}, {"start": 12, "end": 18, "reading time": 6.0, "text": "If this guy would've had a heart attack on stage... Let the body hit the floor", "reward": 10.115499820855689, "correlation": "0.4015383365476966", "corr_A": "0.24", "corr_V": "0.52", "likes": 87.0, "norm_likes": 0.8828399637138882, "photo": "https://yt3.ggpht.com/ytc/AIdro_lpD5EKbfh7JMi5tMcpFILRfQfXKBrMFMW7x7-tqcLbGjw=s88-c-k-c0x00ffffff-no-rj", "author": "@dylanmerkle9462"}, {"start": 18, "end": 24, "reading time": 6.0, "text": "Half the audience; \"omg wtf that poor deluded old man\" The other half; FLOOOOOOOOOOOOOOOR", "reward": 11.27725010524435, "correlation": "0.4427246109626469", "corr_A": "0.16", "corr_V": "0.6", "likes": 11000.0, "norm_likes": 0.9940924622820979, "photo": "https://yt3.ggpht.com/k8w0qUIOYUtFycTQweeO-rbcGw1KeyP7t7amgkL93Te4HrY1q8vpYUq9tdqxs-DfXTudExjf=s88-c-k-c0x00ffffff-no-rj", "author": "@F4GRAPHICS"}, {"start": 24, "end": 30, "reading time": 6.0, "text": "Every single person in the crowd who immediately stood up and started cheering is living their best life. I'm singing with you buddy, sing on.", "reward": 11.467189446889492, "correlation": "0.47188428934675336", "corr_A": "0.0", "corr_V": "0.67", "likes": 1000.0, "norm_likes": 0.9674296624547418, "photo": "https://yt3.ggpht.com/YiUG28M4-69SmvRP0JVK9Gzv5C_uLWACTT-njnuQ4SPxRYoGTvh80ip5aPqxUvPvZLZKoGmJ0x8=s88-c-k-c0x00ffffff-no-rj", "author": "@alexis_moonlight"}, {"start": 30, "end": 35, "reading time": 5.0, "text": "I love how the judges let him finish and let him have the moment.", "reward": 8.985303730890722, "correlation": "0.4350585299045634", "corr_A": "0.08", "corr_V": "0.61", "likes": 222.0, "norm_likes": 0.9269436863690177, "photo": "https://yt3.ggpht.com/ytc/AIdro_lgiwbtEoRc3dWOf8_NHEd8-_Gfli2xJe3oeA0hqIa0sg=s88-c-k-c0x00ffffff-no-rj", "author": "@LordRoyalTee"}, {"start": 35, "end": 41, "reading time": 6.0, "text": "This is a man who has lived his life to the fullest. From job to retirement to showing the world a 80 year old can still rock", "reward": 10.825202780362249, "correlation": "0.4132537739960403", "corr_A": "0.0", "corr_V": "0.58", "likes": 1900.0, "norm_likes": 0.9776929154016274, "photo": "https://yt3.ggpht.com/ytc/AIdro_lhiI2utH0MrhzRBR3w_KiZtk6s9TYhjrz5I8ZP3U4Vpw=s88-c-k-c0x00ffffff-no-rj", "author": "@jerrydunham2042"}, {"start": 41, "end": 47, "reading time": 6.0, "text": "82 years old and he knows the tempo of the song and when to start singing after the drum stick counting. This is talent!", "reward": 10.647448810729983, "correlation": "0.42749495240929314", "corr_A": "0.12", "corr_V": "0.59", "likes": 184.0, "norm_likes": 0.9195848969697442, "photo": "https://yt3.ggpht.com/ytc/AIdro_nF5RdM11mgeYMxkhsIeI-R42yeJa9BUFeOFNr9vvaGRfQ=s88-c-k-c0x00ffffff-no-rj", "author": "@addyschultka"}, {"start": 47, "end": 53, "reading time": 6.0, "text": "Fuck the Hubble telescope. He just needs to look in a mirror to see the biggest star of them all 😂", "reward": 11.958319766681548, "correlation": "0.5056814524923574", "corr_A": "0.69", "corr_V": "0.17", "likes": 2600.0, "norm_likes": 0.9816903894622098, "photo": "https://yt3.ggpht.com/i3OrYaxsW-mv7Yxy_d1YGPcJlVlYNEf-I6cc0FyAp0Sl45Qs5wh2_Ops7YIjl7Ro3JLa4sUj=s88-c-k-c0x00ffffff-no-rj", "author": "@jawkneeG"}, {"start": 54, "end": 59, "reading time": 5.0, "text": "I was a navy pilot, that was far enough in to space..... 0:54", "reward": 10.951441171403468, "correlation": "0.6706544061488076", "corr_A": "0.63", "corr_V": "0.07", "likes": 52.0, "norm_likes": 0.8489794219830787, "photo": "https://yt3.ggpht.com/t3jJx9K_ICkJZurs_DS_BUsri3HJYm5Du0CiYvCsn2Q0FWaj-ed12wGdBsxjo0Hu5EgYAE9VUQ=s88-c-k-c0x00ffffff-no-rj", "author": "@PongYang281"}, {"start": 59, "end": 64, "reading time": 5.0, "text": "82 years old… Rocket scientist… Navy Pilot… Karaoke Star… Legend.", "reward": 9.231652641949097, "correlation": "0.42611903305386073", "corr_A": "0.36", "corr_V": "0.48", "likes": 11000.0, "norm_likes": 0.9940924622820979, "photo": "https://yt3.ggpht.com/ytc/AIdro_mllQblkkXr1dGz9zRiE--qeSQ7FMDm44UrAXzYiyV1ag=s88-c-k-c0x00ffffff-no-rj", "author": "@DarthDregan"}, {"start": 64, "end": 70, "reading time": 6.0, "text": "Even if he would have passed away on the stage, you can tell that's exactly how the man wants to go out, having fun and doing what he truely loves. Rock on grandpa 🎤👴🏼🎸", "reward": 11.14660781986463, "correlation": "0.4454338380587651", "corr_A": "0.19", "corr_V": "0.6", "likes": 972.0, "norm_likes": 0.9669002938599082, "photo": "https://yt3.ggpht.com/N8tYKmTLGWo1omFxF9cAwfD1U-Mk7LE3MvRxDiJhScexhNMQnYdpeKeHpueyV1gAHRQRGCeGuw=s88-c-k-c0x00ffffff-no-rj", "author": "@thefazsha"}, {"start": 70, "end": 71, "reading time": 1.0, "text": "A old man", "reward": 1.0114610066366438, "correlation": "0.5057305033183219", "corr_A": "0.0", "corr_V": "0.72", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/eEAxZF-uNR-uR8I1ebbb6mWHEqRXIUgg7RgPVmX0xe4FCYLZ-h4666gqn9qdDWpLZjuAYysO=s88-c-k-c0x00ffffff-no-rj", "author": "@jasper_c8805"}, {"start": 71, "end": 77, "reading time": 6.0, "text": "I just love how before he even started singing, the old man is the smartest person on the stage", "reward": 10.288107808616626, "correlation": "0.4350836175589165", "corr_A": "0.07", "corr_V": "0.61", "likes": 49.0, "norm_likes": 0.8445173996516044, "photo": "https://yt3.ggpht.com/ytc/AIdro_lRt6WW5Mx5FaSdPV8ixuBiNJFziWhpT_Q-GYTOIS-GLMjrDl8d6eWdF16o0T_syLL2Vw=s88-c-k-c0x00ffffff-no-rj", "author": "@kendac5493"}, {"start": 77, "end": 79, "reading time": 2.0, "text": "man got a standing ovation", "reward": 2.97680337047154, "correlation": "0.42046121446889195", "corr_A": "0.03", "corr_V": "0.59", "likes": 9.0, "norm_likes": 0.6474792562979862, "photo": "https://yt3.ggpht.com/ytc/AIdro_l8cBHK8UrYXypMNpqcaQ4vKcalnMSrTcAz4dTlXQ24Q1ent3laiJ8SEoYvlKXpoJtJQQ=s88-c-k-c0x00ffffff-no-rj", "author": "@claybornlewis276"}, {"start": 79, "end": 81, "reading time": 2.0, "text": "rock that stage old man", "reward": 1.67659081380313, "correlation": "0.4191477034507825", "corr_A": "0.04", "corr_V": "0.59", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/ytc/AIdro_ljCvxSIv_QfWYDiKlHxQCebEKQXBkS5I6DM2BnUL1yB5c=s88-c-k-c0x00ffffff-no-rj", "author": "@grimmreaper1331"}, {"start": 81, "end": 86, "reading time": 5.0, "text": "3/4 of the audience/jury has no clue what the Hubble telescope is", "reward": 8.781701033719365, "correlation": "0.4103961918581176", "corr_A": "0.53", "corr_V": "0.23", "likes": 283.0, "norm_likes": 0.9355478230276376, "photo": "https://yt3.ggpht.com/ytc/AIdro_lL-cNUp1JN90maemxBen7BN1VthZYEAWKXKyH2osG3YgE=s88-c-k-c0x00ffffff-no-rj", "author": "@dirkm1920"}, {"start": 86, "end": 91, "reading time": 5.0, "text": "The STARK contrast between judges reaction and crowd is pure gold.", "reward": 8.265822205275406, "correlation": "0.49418091920633334", "corr_A": "0.05", "corr_V": "0.7", "likes": 10.0, "norm_likes": 0.6648026026424144, "photo": "https://yt3.ggpht.com/ytc/AIdro_keZq025bA2-02byJpMz0otpyZTcnQ-VszyKHw3N5w=s88-c-k-c0x00ffffff-no-rj", "author": "@galenpedersen4755"}, {"start": 91, "end": 97, "reading time": 6.0, "text": "He should have said \"this is a low point of my life being on this corporate piece of shit show were you judge talent and where your judges dont know dick about judging talent :D\"", "reward": 11.451483196538849, "correlation": "0.4850238006910413", "corr_A": "0.0", "corr_V": "0.69", "likes": 310.0, "norm_likes": 0.9385329313743922, "photo": "https://yt3.ggpht.com/ytc/AIdro_kwWDo7GKwNndmdjcRexKiGMXYIgLOLFwCyXC5ryjQZ0w=s88-c-k-c0x00ffffff-no-rj", "author": "@WutangBizkit"}, {"start": 97, "end": 99, "reading time": 2.0, "text": "Let the bodies  HIT THE FLOOR", "reward": 4.544688075577514, "correlation": "0.6895164179524796", "corr_A": "0.97", "corr_V": "0.11", "likes": 105.0, "norm_likes": 0.8933112018837978, "photo": "https://yt3.ggpht.com/FKOFtZEB9xEhikWozmG7A3GcfRLlDAd8F923obiFKjDtIIBloxJ5SamTx4gwoScjiwjiQm2Z5Q=s88-c-k-c0x00ffffff-no-rj", "author": "@user-fu2sh5xb8v"}, {"start": 99, "end": 103, "reading time": 4.0, "text": "The bodies have hit the floor, and they can't get up.", "reward": 8.193934508694884, "correlation": "0.5405269823594896", "corr_A": "0.75", "corr_V": "0.15", "likes": 1000.0, "norm_likes": 0.9674296624547418, "photo": "https://yt3.ggpht.com/ytc/AIdro_l3plD8mBn92CtCJIHeylFE9y_vyi455ORy5x4SQd5hkZA=s88-c-k-c0x00ffffff-no-rj", "author": "@send_nudibranchs"}, {"start": 103, "end": 109, "reading time": 6.0, "text": "Audience: ah, yes. A man of many experiences and stories. He must be a very well rounded man with cultured taste in musi--  Old Guy: let the bodies hit the TSS TSS FLOOOOOOORRRR", "reward": 12.223670959961385, "correlation": "0.5409637370504663", "corr_A": "0.5", "corr_V": "0.58", "likes": 566.0, "norm_likes": 0.9553510192259652, "photo": "https://yt3.ggpht.com/eDK1VoLWaHmEJybT5ZaM8eak6j9LGTeiOLzTOEDMJY54WV631xY6FlqpH0ya23ZNs01F5BnXpQc=s88-c-k-c0x00ffffff-no-rj", "author": "@ronin7561"}, {"start": 109, "end": 110, "reading time": 1.0, "text": "yup", "reward": 1.2108225121207663, "correlation": "0.4027539236984389", "corr_A": "0.57", "corr_V": "0.03", "likes": 3.0, "norm_likes": 0.40531466472388855, "photo": "https://yt3.ggpht.com/FL0LsSBNGMTu0P_G3HwQ5n9C70c-ONfMx6S47JMSyn_uciM8dlJlTarENEvsR1Aq1Ihvd8yKIEg=s88-c-k-c0x00ffffff-no-rj", "author": "@Juggernaut49859"}, {"start": 110, "end": 114, "reading time": 4.0, "text": "He had the audience on their feet immediately.", "reward": 7.344671612347641, "correlation": "0.4560393876896401", "corr_A": "0.07", "corr_V": "0.64", "likes": 206.0, "norm_likes": 0.9240891277076302, "photo": "https://yt3.ggpht.com/ytc/AIdro_nEK1kbF7CC8jzmxy5AOsGznV0V8U7waLwCm7EBugLuJA6Zhn2wYaW4DejMrvW3aNbXFg=s88-c-k-c0x00ffffff-no-rj", "author": "@Ann57-l1r"}, {"start": 114, "end": 118, "reading time": 4.0, "text": "Props to the judges for not hitting a single X.", "reward": 7.60568554027833, "correlation": "0.4822486686489045", "corr_A": "0.0", "corr_V": "0.68", "likes": 295.0, "norm_likes": 0.9369240477717735, "photo": "https://yt3.ggpht.com/ytc/AIdro_nXt6rrJE8qkiJWtPy_IgZcz-xnImV1kZgQqDb-jvw=s88-c-k-c0x00ffffff-no-rj", "author": "@gigaus0"}, {"start": 118, "end": 123, "reading time": 5.0, "text": "This is the best thing happened in American got talent....🤘", "reward": 10.222947945791795, "correlation": "0.5334483368783657", "corr_A": "0.15", "corr_V": "0.74", "likes": 1900.0, "norm_likes": 0.9776929154016274, "photo": "https://yt3.ggpht.com/ytc/AIdro_mTMpZxTIO0opfSxeRpO-QfotIyiNEl6BoQN-ze3vA=s88-c-k-c0x00ffffff-no-rj", "author": "@sehpu8571"}, {"start": 123, "end": 125, "reading time": 2.0, "text": "Can't take much more!", "reward": 2.588262694512933, "correlation": "0.6470656736282332", "corr_A": "0.91", "corr_V": "0.05", "likes": 0.0, "norm_likes": 0.0, "photo": "https://yt3.ggpht.com/JTFhpcfuAFcGUBXdeWdVCWUgvw7EWUfk3lfN-EWRfhMFfHZ5jKVlTNk551VTnfoB63R4tO1Q-_c=s88-c-k-c0x00ffffff-no-rj", "author": "@V3CZ"}, {"start": 125, "end": 131, "reading time": 6.0, "text": "This shit is actually incredible. About 50 percent of the crowd was judging hardcore but holy shit its honestly really impressive that hes screaming like that. Why have I not seen this until now?", "reward": 10.575022795082718, "correlation": "0.40113135068974837", "corr_A": "0.18", "corr_V": "0.54", "likes": 700.0, "norm_likes": 0.9602410978009562, "photo": "https://yt3.ggpht.com/ytc/AIdro_myQCk1PRP1m0WWeArqPHX7EmXCWGxIbjFkdG2k-cM=s88-c-k-c0x00ffffff-no-rj", "author": "@nahmaing8268"}, {"start": 131, "end": 137, "reading time": 6.0, "text": "'Nothing wrong with me... Nothing wrong with me... Nothing wrong with me...'  Sure, man.", "reward": 12.81743846300867, "correlation": "0.5963327536621157", "corr_A": "0.84", "corr_V": "0.07", "likes": 365.0, "norm_likes": 0.9435742365105473, "photo": "https://yt3.ggpht.com/ytc/AIdro_lmfr1nPe-LMX8tln9v6Mi2frIVZDa3gTE9KnJKcAYWHA=s88-c-k-c0x00ffffff-no-rj", "author": "@MicuBamba"}, {"start": 137, "end": 141, "reading time": 4.0, "text": "NOTHING'S WRONG WITH HIM NOTHING'S WRONG WITH HIM", "reward": 7.843066986796439, "correlation": "0.5119213494636681", "corr_A": "0.69", "corr_V": "0.21", "likes": 295.0, "norm_likes": 0.9369240477717735, "photo": "https://yt3.ggpht.com/ytc/AIdro_nZpkLzZixY99XwPJrDp8T5GQO228a9w6e6kHpJjtdYL52I=s88-c-k-c0x00ffffff-no-rj", "author": "@jzip"}, {"start": 141, "end": 143, "reading time": 2.0, "text": "SOMETHINGS GOT TO GIVE!", "reward": 3.6719736196323334, "correlation": "0.5517633486520602", "corr_A": "0.78", "corr_V": "0.08", "likes": 16.0, "norm_likes": 0.7324601125120462, "photo": "https://yt3.ggpht.com/ytc/AIdro_kFXLQ98F__aF5F3vZVaseas0SlA3T155_WZERH3tPpFJM=s88-c-k-c0x00ffffff-no-rj", "author": "@Jere-hk7wf"}, {"start": 143, "end": 147, "reading time": 4.0, "text": "Are you sure the my grandfather isn't on the stage", "reward": 6.873233087108886, "correlation": "0.4738918479252733", "corr_A": "0.15", "corr_V": "0.65", "likes": 22.0, "norm_likes": 0.7705245759266751, "photo": "https://yt3.ggpht.com/7S-FyGyrvMQToAwaBr4isFCZuZDN7Opk4R7XT92KlS3kr2zkuimbfjsTnQ_fDrYyaLUbsKH7QA=s88-c-k-c0x00ffffff-no-rj", "author": "@HammerOO7"}, {"start": 147, "end": 153, "reading time": 6.0, "text": "Grandma: \"Help, I've fallen and I can't get up!!\" Grandpa (hopping out of the recliner): \"LET THE BODIES HIT THE FLOOR!!! LET THE BODIES HIT THE FLOOR!!!\"", "reward": 10.856399529776628, "correlation": "0.4209851295873482", "corr_A": "0.59", "corr_V": "0.06", "likes": 1000.0, "norm_likes": 0.9674296624547418, "photo": "https://yt3.ggpht.com/ytc/AIdro_lgkJduVtDsrGVG28VJkZK-TAmAMsBdips4XFV4CYBoW_4=s88-c-k-c0x00ffffff-no-rj", "author": "@jayykellyxiii4910"}, {"start": 153, "end": 156, "reading time": 3.0, "text": "Let the bodies hit the.... FLOOOOOOOOOOOOR!", "reward": 5.9694371859558935, "correlation": "0.5498394545324038", "corr_A": "0.66", "corr_V": "0.41", "likes": 99.0, "norm_likes": 0.8901334862538235, "photo": "https://yt3.ggpht.com/QfnQ0S8L8hP13zcxSXQYoCkbYoTHivDVRwoojNfswOd18h9LdgfxZM55ddGHdEsLWas2w_q8=s88-c-k-c0x00ffffff-no-rj", "author": "@IC-vq9sz"}, {"start": 156, "end": 162, "reading time": 6.0, "text": "Goddamnit grandpa why haven't you taken your pills  Let the bodies hit the floor  Let the bodies hit the floor  Let the bodies hit the floor  Grandpa what are you doing ?   Let the bodies hit the-    Grandpa don't you finish that-    FLOOOOOOOOOOOOOOOOOOR      ._.", "reward": 11.105352726878188, "correlation": "0.44011339862094573", "corr_A": "0.58", "corr_V": "0.22", "likes": 1200.0, "norm_likes": 0.970665323904473, "photo": "https://yt3.ggpht.com/Pb8hMGwPtMqPLhscv_0KlkQ5Wl9i2stkilA8OrwfyIK72PkdNoZoChxE0cTX8RnkN7ydoZSRbg8=s88-c-k-c0x00ffffff-no-rj", "author": "@koko_puffs710"}, {"start": 162, "end": 166, "reading time": 4.0, "text": "Grandpa sings better than most singers nowadays omg", "reward": 7.216367851969961, "correlation": "0.43626698042035217", "corr_A": "0.0", "corr_V": "0.62", "likes": 252.0, "norm_likes": 0.931558002151786, "photo": "https://yt3.ggpht.com/ytc/AIdro_loc--68u81UFFAlc0rwwu5JqSNb2-GOSXQS48KocGFrDM=s88-c-k-c0x00ffffff-no-rj", "author": "@zamaniazly2522"}, {"start": 166, "end": 172, "reading time": 6.0, "text": "He has talent. Try and ask anybody to sing that song out loud at the age of 82 and see if they can still manage to live another hour.", "reward": 11.35205598411876, "correlation": "0.45240154027766305", "corr_A": "0.0", "corr_V": "0.64", "likes": 4400.0, "norm_likes": 0.9872062501311336, "photo": "https://yt3.ggpht.com/ytc/AIdro_kGS18BG4AMjY_lBZdOwNnzvYhLdH3ml9SBZ4VUA01OhDE=s88-c-k-c0x00ffffff-no-rj", "author": "@SagaciousEagle"}, {"start": 172, "end": 178, "reading time": 6.0, "text": "How can you not love this? It's not about being on key or anything, it's just about energy & that dude brought it. He knew he wasn't gonna win but just wanted to have fun & give people a moment to enjoy.", "reward": 10.763587470986185, "correlation": "0.437740871084819", "corr_A": "0.0", "corr_V": "0.62", "likes": 179.0, "norm_likes": 0.918449502994726, "photo": "https://yt3.ggpht.com/iARMRN93xz3SHgCOuw3f_J49K1FK2CkNWCKpk320FthPKlj1HNoQQnj-PQ3DqoZvjyxdjqxPoA=s88-c-k-c0x00ffffff-no-rj", "author": "@CLL21"}];
+
+    // 요소 참조
+    var video=null, commentsContainer=null, commentsOverlay=null, likesOverlay=null;
+    var playPauseBtn=null, playIcon=null, pauseIcon=null;
+    var progressContainer=null, progressBar=null;
+    var timeDisplay=null;
+
+    var isDragging=false;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      video = document.getElementById('video-player');
+      commentsContainer = document.getElementById('comments-container');
+      commentsOverlay = document.getElementById('comments-overlay');
+      likesOverlay = document.getElementById('likes-overlay');
+      playPauseBtn = document.getElementById('play-pause-btn');
+      playIcon = document.getElementById('play-icon');
+      pauseIcon = document.getElementById('pause-icon');
+      progressContainer = document.getElementById('progress-container');
+      progressBar = document.getElementById('progress-bar');
+      timeDisplay = document.getElementById('time-display');
+
+      // start 기준 정렬
+      optimalComments.sort((a,b)=>a.start-b.start);
+
+      // 이벤트 바인딩
+      video.addEventListener('timeupdate', onTimeUpdate);
+      video.addEventListener('loadedmetadata', ()=>{ updateTimeDisplay(); recalcOverlayByComments(); });
+      video.addEventListener('play', updatePlayPauseButton);
+      video.addEventListener('pause', updatePlayPauseButton);
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      progressContainer.addEventListener('click', seekVideo);
+      progressContainer.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', endDrag);
+
+      window.addEventListener('resize', recalcOverlayByComments);
+
+      // 초기 상태
+      updatePlayPauseButton();
+    });
+
+    function togglePlayPause(){ if(video.paused) video.play(); else video.pause(); }
+    function updatePlayPauseButton(){
+      if(video.paused){ playIcon.style.display='block'; pauseIcon.style.display='none'; }
+      else { playIcon.style.display='none'; pauseIcon.style.display='block'; }
+    }
+
+    function updateTimeDisplay(){
+      if(!video.duration) return;
+      const cur = formatTime(video.currentTime);
+      const tot = formatTime(video.duration);
+      timeDisplay.textContent = `${cur} / ${tot}`;
+    }
+
+    function onTimeUpdate(){
+      const t = video.currentTime;
+      // 진행바
+      if(video.duration){ progressBar.style.width = ((t/video.duration)*100) + '%'; }
+      updateTimeDisplay();
+
+      // 댓글 표시/제거
+      optimalComments.forEach(function(cmt, idx){
+        var el = document.getElementById('comment-'+idx);
+        if(cmt.start <= t && t < cmt.end){
+          if(!el) addLiveComment(cmt, idx);
+        } else if(el && t >= cmt.end){
+          // 페이드 아웃 후 제거, likes도 함께 제거
+          el.style.opacity = '0';
+          var likeEl = document.getElementById('like-'+idx);
+          if(likeEl) likeEl.style.opacity = '0';
+          setTimeout(()=>{
+            if(el && el.parentNode) el.remove();
+            if(likeEl && likeEl.parentNode) likeEl.remove();
+            recalcOverlayByComments();
+          }, 300);
+        }
+      });
+      // 위치 동기화
+      syncLikesPositions();
+    }
+
+    function startDrag(e){ isDragging=true; e.preventDefault(); updateVideoTime(e); }
+    function doDrag(e){ if(!isDragging) return; e.preventDefault(); updateVideoTime(e); }
+    function endDrag(){ isDragging=false; }
+    function seekVideo(e){ if(e.type==='click'){ setTimeout(()=>{ if(!isDragging) updateVideoTime(e); },10); } }
+    function updateVideoTime(e){
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left)/rect.width));
+      video.currentTime = pos * video.duration;
+    }
+
+    function addLiveComment(cmt, idx){
+      var div = document.createElement('div');
+      div.className = 'live-comment';
+      div.id = 'comment-' + idx;
+
+      var user = cmt.author || cmt.user || getRandomName();
+      var txt = cmt.text || '';
+      var likes = (cmt.likes !== undefined) ? cmt.likes : 0;
+      var profileColor = getRandomColor();
+      var photo = cmt.photo;
+
+      div.innerHTML = `
+        <div class="comment-content">
+          <div class="text-content">
+            <div class="user-info">
+              ${photo ? `<img class="profile-photo" src="${photo}" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />` : ''}
+              <div class="profile-icon" style="background-color:${profileColor}; display:${photo ? 'none' : 'block'};"></div>
+              <span class="username">${user}</span>
+            </div>
+            <span class="comment-text">${txt}</span>
+          </div>
+        </div>`;
+
+      // 등장 애니메이션 기본값
+      div.style.bottom = '10px';
+      div.style.opacity = '0';
+      commentsContainer.appendChild(div);
+      // 좋아요/하트는 별도 오버레이 레이어에 렌더링(마스크 비적용)
+      var like = document.createElement('div');
+      like.className = 'like-item';
+      like.id = 'like-' + idx;
+      like.style.bottom = '10px';
+      like.style.opacity = '0';
+      like.innerHTML = `
+        <svg class="heart-icon" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="likes-number">${formatLikes(likes)}</span>`;
+      likesOverlay.appendChild(like);
+
+      // 생성 직후 위치/여백 계산을 먼저 수행해 점프 방지
+      placeLikeForComment(div, like);
+      reserveTextSpace(div, like);
+
+      setTimeout(()=>{ div.style.opacity='1'; like.style.opacity='1'; recalcOverlayByComments(); }, 50);
+    }
+
+    // ===== A 스타일: 댓글 길이에 따라 오버레이 높이와 마스크 가변 =====
+    const OVERLAY_PADDING = 15; // 하단 여백
+    const OVERLAY_MIN = 68;     // 최소 높이
+    const OVERLAY_MAX_RATIO = 0.55; // 비디오 높이 대비 최대 비율
+    const USERINFO_EXTRA = 16;  // user-info 라인 여유치
+
+    function clampOverlayHeight(px){
+      const vc = document.querySelector('.video-container');
+      const vh = vc?.getBoundingClientRect().height || 0;
+      const maxH = vh ? Math.floor(vh * OVERLAY_MAX_RATIO) : 260;
+      return Math.max(OVERLAY_MIN, Math.min(px, maxH));
+    }
+
+    function recalcOverlayByComments(){
+      const visibles = Array.from(commentsContainer.querySelectorAll('.live-comment'));
+      if(visibles.length === 0){
+        const h = clampOverlayHeight(OVERLAY_MIN);
+        commentsOverlay.style.setProperty('--overlay-h', h + 'px');
+        commentsContainer.style.setProperty('--mask-stop', '35%');
+        return;
+      }
+
+      let maxCardH = 0;
+      visibles.forEach(el=>{ const r = el.getBoundingClientRect(); maxCardH = Math.max(maxCardH, r.height); });
+
+      const desired = clampOverlayHeight(Math.ceil(maxCardH + OVERLAY_PADDING + USERINFO_EXTRA));
+      commentsOverlay.style.setProperty('--overlay-h', desired + 'px');
+
+      let maskStop = 45;
+      if(desired > 120) maskStop = 55;
+      if(desired > 160) maskStop = 65;
+      if(desired > 200) maskStop = 72;
+      commentsContainer.style.setProperty('--mask-stop', maskStop + '%');
+      // 좋아요 위치 재계산
+      syncLikesPositions();
+    }
+    
+    function syncLikesPositions(){
+      if(!commentsOverlay || !commentsContainer || !likesOverlay) return;
+      const overlayRect = commentsOverlay.getBoundingClientRect();
+      const comments = Array.from(commentsContainer.querySelectorAll('.live-comment'));
+      comments.forEach(el=>{
+        const id = el.id || '';
+        const idx = id.split('-')[1];
+        if(idx === undefined) return;
+        const likeEl = document.getElementById('like-'+idx);
+        if(!likeEl) return;
+        placeLikeForComment(el, likeEl, overlayRect);
+        likeEl.style.opacity = getComputedStyle(el).opacity;
+        reserveTextSpace(el, likeEl);
+      });
+    }
+    
+    function placeLikeForComment(commentEl, likeEl, overlayRectOpt){
+      if(!commentsOverlay) return;
+      const overlayRect = overlayRectOpt || commentsOverlay.getBoundingClientRect();
+      const userInfo = commentEl.querySelector('.user-info');
+      const targetRect = (userInfo ? userInfo.getBoundingClientRect() : commentEl.getBoundingClientRect());
+      const likeH = Math.round(likeEl.getBoundingClientRect().height || 0);
+      const bottomPx = Math.max(0, Math.round(overlayRect.bottom - targetRect.top - likeH));
+      likeEl.style.bottom = bottomPx + 'px';
+    }
+    
+    function reserveTextSpace(commentEl, likeEl){
+      const textContainer = commentEl.querySelector('.text-content') || commentEl;
+      const likeRect = likeEl.getBoundingClientRect();
+      const reserve = Math.max(28, Math.round(likeRect.width) + 8);
+      textContainer.style.paddingRight = reserve + 'px';
+    }
+  </script>
+</body>
+</html>
