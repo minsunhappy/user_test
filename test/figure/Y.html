@@ -88,7 +88,7 @@
       border-radius: 3px;
       margin-bottom: 6px;
       position: relative;
-      cursor: pointer;
+      cursor: default;
     }
 
     /* 진행 바 */
@@ -412,10 +412,10 @@
       video.addEventListener('pause', updatePlayPauseButton);
 
       playPauseBtn.addEventListener('click', togglePlayPause);
-      progressContainer.addEventListener('click', seekVideo);
-      progressContainer.addEventListener('mousedown', startDrag);
-      document.addEventListener('mousemove', doDrag);
-      document.addEventListener('mouseup', endDrag);
+      // progressContainer.addEventListener('click', seekVideo);
+      // progressContainer.addEventListener('mousedown', startDrag);
+      // document.addEventListener('mousemove', doDrag);
+      // document.addEventListener('mouseup', endDrag);
 
       // 초기 상태
       updatePlayPauseButton();
